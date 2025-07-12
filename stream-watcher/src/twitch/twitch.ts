@@ -114,6 +114,7 @@ export class TwitchService implements ITwitchService {
   		  	  	const nameDiv = Array.from(
   		  	  	  	header.querySelectorAll('div.Layout-sc-1xcs6mc-0')
   		  	  	).find(d => d.classList.contains('hJWyGb'));
+				console.log(nameDiv)
   		  	  	const name = nameDiv
   		  	  	  	?.querySelector('img.tw-image.alt')
   		  	  	  	?.textContent?.trim() ?? '';
