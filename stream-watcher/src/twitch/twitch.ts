@@ -20,11 +20,9 @@ export class TwitchService implements ITwitchService {
 		}
 
 		try {
-			const test =await page.waitForSelector('a.preview-card-channel-link', {
-				timeout: 15000
+			await page.waitForSelector('a.preview-card-channel-link', {
+				timeout: 30000
 			});
-
-			console.log(test)
 		} catch (err) {
 			console.warn(`[TwitchService] Нет активных стримов для игры ${gameSlug}`);
 			await page.close();
