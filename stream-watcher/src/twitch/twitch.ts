@@ -50,25 +50,25 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
-	
+
 		console.log('[DEBUG] Загружаем страницу...');
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
 			waitUntil: 'networkidle2',
 			timeout: 60000,
 		});
-	
-		await page.waitForTimeout(3000);
+
+		await new Promise(resolve => setTimeout(resolve, 3000));
 		console.log('[DEBUG] Начинаем прокрутку страницы...');
-	
+
 		await page.evaluate(async () => {
 			for (let i = 0; i < 15; i++) {
 				window.scrollBy(0, window.innerHeight);
 				await new Promise(resolve => setTimeout(resolve, 400));
 			}
 		});
-	
+
 		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор .CampaignCard...');
-	
+
 		const gameNames = await page.$$eval('[data-test-selector="CampaignCard"]', (cards) => {
 			return Array.from(cards).map(card => {
 				const heading = card.querySelector('[data-test-selector="CampaignTitle"]');
@@ -76,11 +76,11 @@ export class TwitchService implements ITwitchService {
 				return heading.textContent?.trim() || null;
 			}).filter(Boolean) as string[];
 		});
-	
+
 		console.log('[DEBUG] Найдено игр:', gameNames);
-	
+
 		await page.close();
-	
+
 		const slugs = gameNames
 			.map(name =>
 				name
@@ -89,9 +89,9 @@ export class TwitchService implements ITwitchService {
 					.replace(/(^-+|-+$)/g, '') // удаляем дефисы с начала и конца
 			)
 			.filter(Boolean);
-		
+
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
-		
+
 		return [...new Set(slugs)];
 	}
 
