@@ -1,0 +1,26 @@
+{
+  "name": "twitch_miner",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "exec ts-node-esm stream-watcher/src/main.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^17.2.0",
+    "injection-js": "^2.5.0",
+    "inversify": "^7.5.4",
+    "puppeteer": "^24.12.1",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^8.2.3",
+    "@types/node": "^24.0.13",
+    "@types/puppeteer": "^7.0.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

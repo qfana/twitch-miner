@@ -1,0 +1,20 @@
+# Node modules
+node_modules/
+
+# Output folders
+dist/
+*.log
+
+# Env files
+.env
+
+# pnpm store
+.pnpm-store/
+
+# IDE
+.vscode/
+.idea/
+
+# System
+.DS_Store
+Thumbs.db
