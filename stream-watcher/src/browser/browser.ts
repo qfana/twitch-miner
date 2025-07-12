@@ -28,6 +28,7 @@ export class BrowserService implements IBrowserService {
 
     public async setCookie(): Promise<void> {
         const page = await this.context?.newPage();
+        console.log('[DEBUG] Using AUTH_TOKEN:', this.AUTH_TOKEN);
         await page?.setCookie({
             name: 'auth-token',
             value: this.AUTH_TOKEN,
