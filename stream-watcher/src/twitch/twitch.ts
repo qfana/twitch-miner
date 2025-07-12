@@ -59,33 +59,24 @@ export class TwitchService implements ITwitchService {
 	
 		console.log('[DEBUG] Начинаем прокрутку страницы...');
 		await page.evaluate(async () => {
-			for (let i = 0; i < 20; i++) {
+			for (let i = 0; i < 15; i++) {
 				window.scrollBy(0, window.innerHeight);
-				await new Promise(resolve => setTimeout(resolve, 300));
+				await new Promise(resolve => setTimeout(resolve, 400));
 			}
 		});
-		console.log('[DEBUG] Прокрутка завершена.');
+		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор названий...');
 	
-		// Извлекаем названия игр из <p> внутри .accordion-header
-		const gameNames = await page.$$eval('button.accordion-header p', elements =>
-			elements.map(el => el.textContent?.trim()).filter((name): name is string => !!name)
+		const names = await page.$$eval('div.accordion-header p', (nodes) =>
+			nodes.map(el => el.textContent?.trim()).filter(Boolean)
 		);
-	
-		console.log('[DEBUG] Имена игр до обработки:', gameNames);
 	
 		await page.close();
 	
-		const slugs = gameNames
-			.map(name =>
-				name
-					.toLowerCase()
-					.replace(/[^a-z0-9]+/g, '-') // заменить все не a-z0-9 на дефис
-					.replace(/(^-+|-+$)/g, '') // удалить дефисы с начала и конца
-			)
+		const slugs = names
+			.map(name => name!.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, ''))
 			.filter(Boolean);
-		
+	
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
-		
 		return [...new Set(slugs)];
 	}
 
@@ -101,20 +92,23 @@ export class TwitchService implements ITwitchService {
 
 		console.log('[DEBUG] Проверяем инвентарь на предмет игры:', slug);
 
-		// Ждём, пока подгрузятся элементы дропа
-		await page.waitForSelector('div[data-a-target="drop-campaign-card"]', { timeout: 15000 });
+		// Ждём, пока подгрузятся прогресс-бары
+		await page.waitForSelector('div[role="progressbar"]', { timeout: 15000 });
 
-		const isClaimed = await page.$$eval('div[data-a-target="drop-campaign-card"]', (cards, targetSlug) => {
-			return !cards.some(card => {
-				const gameName = card.querySelector('p')?.textContent?.toLowerCase() || '';
+		const hasUnfinishedDrop = await page.$$eval('div[role="progressbar"]', (bars, targetSlug) => {
+			return bars.some(bar => {
+				const parentCard = bar.closest('div[data-a-target="drop-campaign-card"]');
+				if (!parentCard) return false;
+				const gameName = parentCard.querySelector('p')?.textContent?.toLowerCase() || '';
 				const transformed = gameName.replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, '');
-				return transformed === targetSlug;
+				const progress = parseInt(bar.getAttribute('aria-valuenow') || '0', 10);
+				return transformed === targetSlug && progress < 100;
 			});
 		}, slug);
 
 		await page.close();
-		console.log(`[DEBUG] Для ${slug} получен дроп:`, isClaimed);
-		return isClaimed;
+		console.log(`[DEBUG] Для ${slug} незавершённый дроп найден:`, hasUnfinishedDrop);
+		return !hasUnfinishedDrop;
 	}
 
 }
