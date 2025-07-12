@@ -112,8 +112,8 @@ export class TwitchService implements ITwitchService {
   		  	headers => headers.map(header => {
   		  	  	// 1) имя кампании
   		  	  	const img = header.querySelector<HTMLImageElement>('img.tw-image');
-  		  		const name = img?.alt.trim() ?? '';
-			  
+  		  	  	const name = img?.alt.trim() ?? '';
+
   		  	  	// 2) текст с диапазоном дат из div.caYeGJ
   		  	  	const dateDiv = header.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
   		  	  	const dateText = dateDiv?.textContent?.trim() ?? '';
@@ -152,38 +152,56 @@ export class TwitchService implements ITwitchService {
 
 	// Метод для проверки, есть ли незавершённые дропы по игре
 	public async isDropClaimed(slug: string): Promise<boolean> {
-		const context = this.browserService.getContext();
-		const page = await context.newPage();
+		const ctx = this.browserService.getContext();
+ 		const page = await ctx.newPage();
 
-		await page.goto('https://www.twitch.tv/drops/inventory', {
-			waitUntil: 'domcontentloaded',
-			timeout: 60000,
-		});
+ 		// Заходим на страницу инвентаря Drops
+ 		await page.goto('https://www.twitch.tv/drops/inventory', {
+ 		  	waitUntil: 'networkidle0',
+ 		  	timeout: 60000,
+ 		});
 
-		console.log('[DEBUG] Проверяем инвентарь на предмет игры:', slug);
+ 		// Если есть баннер cookie — закрываем его
+ 		const consent = await page.$('button[data-a-target="consent-banner-accept"]');
+ 		if (consent) {
+ 		  	await consent.click();
+ 		  	await new Promise(resolve => setTimeout(resolve, 2000));
+ 		  	await page.reload({ waitUntil: 'networkidle0' });
+ 		}
 
-		// Ждём, пока подгрузятся прогресс-бары
-		await page.waitForSelector('div[role="progressbar"]', { timeout: 15000 });
+ 		// Ждём, пока прогрузятся карточки инвентаря
+ 		await page.waitForSelector('div[data-a-target="drop-campaign-card"]', { timeout: 15000 });
 
-		const test = await page.$$eval('div[role="progressbar"]', (bars, targetSlug) => {
-			bars.some(bar => {
-				const parentCard = bar.closest('div[data-a-target="drop-campaign-card"]');
-				if (!parentCard) return false;
-				const gameName = parentCard.querySelector('p')?.textContent?.toLowerCase() || '';
-				const transformed = gameName.replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, '');
-				const progress = parseInt(bar.getAttribute('aria-valuenow') || '0', 10);
-			return { parentCard, gameName, transformed, progress }
-			});
+ 		// 1) Находим карточку нужной кампании по href
+ 		const campaignHandle = await page.$(
+ 		  	`a[data-test-selector="DropsCampaignInProgressDescription-no-channels-hint-text"]
+ 		  		+ a.tw-link[href*="/directory/category/${slug}"]`
+ 		);
 
-		}, slug);
-		console.log(test);
+ 		if (!campaignHandle) {
+ 		  // кампания вообще не показана — значит дроп не получен на 100%
+ 		  await page.close();
+ 		  return true;
+ 		}
 
+ 		// 3) Ищем внутри этой карточки все прогресс-бары
+ 		const progressBars = await campaignHandle.$$(
+ 		  	'div.tw-progress-bar[role="progressbar"]'
+ 		);
 
-		const hasUnfinishedDrop = false;
+ 		for (const bar of progressBars) {
+ 		  	const now = await bar.evaluate(el => parseInt(el.getAttribute('aria-valuenow')!, 10));
+ 		  	const max = await bar.evaluate(el => parseInt(el.getAttribute('aria-valuemax')!, 10));
+ 		  	if (now < max) {
+ 		  	  // хоть один бар не довязан до max — дроп ещё можно получить
+ 		  	  await page.close();
+ 		  	  return true;
+ 		  	}
+ 		}
 
-		await page.close();
-		console.log(`[DEBUG] Для ${slug} незавершённый дроп найден:`, hasUnfinishedDrop);
-		return !hasUnfinishedDrop;
+ 		// все бары полные — дроп получен
+ 		await page.close();
+ 		return false;
 	}
 
 }
