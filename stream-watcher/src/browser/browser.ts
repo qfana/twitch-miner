@@ -46,6 +46,17 @@ export class BrowserService implements IBrowserService {
 	        secure: true
 	    });
 
+                try {
+        	await page.waitForSelector('button[data-a-target="consent-banner-accept"]', { timeout: 5000 });
+        	await page.click('button[data-a-target="consent-banner-accept"]');
+        	console.log('[DEBUG] Кликнули на "Принять" куки-баннер');
+        	// Немного подождём, чтобы страница успела прогрузить новые данные
+        	await new Promise(resolve => setTimeout(resolve, 3000));
+        } catch (err) {
+        	console.log('[DEBUG] Куки-баннер не найден, скорее всего уже принят');
+        }
+
+
         await page?.close();
     }
 
