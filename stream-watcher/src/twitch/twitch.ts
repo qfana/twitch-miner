@@ -115,7 +115,7 @@ export class TwitchService implements ITwitchService {
   		  	  	  	header.querySelectorAll('div.Layout-sc-1xcs6mc-0')
   		  	  	).find(d => d.classList.contains('hJWyGb'));
   		  	  	const name = nameDiv
-  		  	  	  	?.querySelector('p.CoreText-sc-1txzju1-0.dzXkjr')
+  		  	  	  	?.querySelector('img.tw-image.alt')
   		  	  	  	?.textContent?.trim() ?? '';
 			  
   		  	  	// 2) текст с диапазоном дат из div.caYeGJ
