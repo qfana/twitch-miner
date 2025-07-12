@@ -74,7 +74,7 @@ export class TwitchService implements ITwitchService {
 	    const campaigns = await page.$$eval('.accordion-header', nodes =>
 	        nodes.map(node => {
 	            const titleEl = node.querySelector('p.CoreText-sc-1txzju1-0.dzXkjr');
-	            const dateEl = node.querySelector('p.CoreText-sc-1txzju1-0.jPfhdT');
+	            const dateEl = node.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
 	            if (!titleEl || !dateEl) return null;
 	            const title = titleEl.textContent?.trim() || '';
 	            const dateText = dateEl.textContent?.trim() || '';
