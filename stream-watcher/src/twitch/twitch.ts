@@ -48,67 +48,52 @@ export class TwitchService implements ITwitchService {
 	}
 
 	public async getActiveDropGameSlugs(): Promise<string[]> {
-		const context = this.browserService.getContext();
-		const page = await context.newPage();
+	    const context = this.browserService.getContext();
+			const page = await context.newPage();
 
-		await page.setViewport({
-			width: 1280,
-			height: 3000,
-		});
-
-		await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36');
-
-    	await page.goto('https://www.twitch.tv', { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-
-    	// 2) Если появился consent, нажать:
-    	const accept = await page.$('button[data-a-target="consent-banner-accept"]');
-		await page.screenshot({ path: 'campaigns-1.png' });
-
-    	if (accept) {
-    	    console.log('[DEBUG] Нажимаем Accept на cookie-banner');
-    	    await accept.click();
-    	    // даём странице время скрыть баннер:
-        	await new Promise(resolve => setTimeout(resolve, 1500));
-    	}
-
-    	console.log('[DEBUG] Теперь перелетаем на Drops campaigns…');
-    	await page.goto('https://www.twitch.tv/drops/campaigns', {
-    	    waitUntil: 'domcontentloaded',
-    	    timeout: 60000,
-    	});
-		
-		console.log('[DEBUG] Начинаем прокрутку и сбор названий по ходу...');
-
-		const collectedNames = new Set<string>();
-
-		for (let i = 0; i < 5; i++) {
-			// Собираем текущие видимые элементы
-			const newNames = await page.$$eval('p.CoreText-sc-1txzju1-0.dzXkjr', (nodes) =>
-				nodes.map(el => el.textContent?.trim()).filter(Boolean)
-			);
-
-			newNames.forEach(name => {
-				if (name) collectedNames.add(name);
+	    console.log('[DEBUG] Зашли на drops/campaigns...');
+	    await page.goto('https://www.twitch.tv/drops/campaigns', {
+	        waitUntil: 'domcontentloaded',
+	        timeout: 60000,
 			});
 
-			await page.evaluate(() => window.scrollBy(0, window.innerHeight));
-			await new Promise(resolve => setTimeout(resolve, 500));
-		}
+	    // Если здесь вдруг висит баннер согласия — закроем его и перезагрузим страницу
+	    const acceptBtn = await page.$('button[data-a-target="consent-banner-accept"]');
+	    if (acceptBtn) {
+	        console.log('[DEBUG] Нашли баннер на /drops/campaigns — жмём Accept и перезагружаем');
+	        await acceptBtn.click();
+	        // даём время баннеру исчезнуть + запросам уйти
+	        await page.waitForTimeout(1500);
+	        await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+			}
 
-		await page.evaluate(() => window.scrollBy(0, window.innerHeight));
+	    console.log('[DEBUG] Прокрутка для подгрузки всех кампаний…');
+	    await page.evaluate(async () => {
+	        for (let i = 0; i < 15; i++) {
+	            window.scrollBy(0, window.innerHeight);
+	            await new Promise(res => setTimeout(res, 400));
+	        }
+			});
 
-		await page.screenshot({ path: 'campaigns-final.png' });
+	    console.log('[DEBUG] Собираем названия игр…');
+	    const names = await page.$$eval(
+	        'div[role="heading"][aria-level="3"] p:first-child',
+	        els => els.map(el => el.textContent?.trim() ?? '').filter(Boolean)
+			);
 
-		await page.close();
+			await page.close();
 
-		const slugs = Array.from(collectedNames)
-			.map(name => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, ''))
-			.filter(Boolean);
+	    const slugs = Array.from(new Set(
+	        names.map(n =>
+	            n
+	              .toLowerCase()
+	              .replace(/[^a-z0-9]+/g, '-')
+	              .replace(/(^-+|-+$)/g, '')
+	        )
+			));
 
-		console.log('[DEBUG] Активные игры с дропсами:', slugs);
-		return slugs;
+	    console.log('[DEBUG] Активные игры с дропсами:', slugs);
+	    return slugs;
 	}
 
 
