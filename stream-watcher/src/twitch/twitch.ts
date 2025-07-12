@@ -65,6 +65,18 @@ export class TwitchService implements ITwitchService {
 			timeout: 60000,
 		});
 
+
+		
+        try {
+        	await page.waitForSelector('button[data-a-target="consent-banner-accept"]', { timeout: 5000 });
+        	await page.click('button[data-a-target="consent-banner-accept"]');
+        	console.log('[DEBUG] Кликнули на "Принять" куки-баннер');
+        	// Немного подождём, чтобы страница успела прогрузить новые данные
+        	await new Promise(resolve => setTimeout(resolve, 3000));
+        } catch (err) {
+		    await page.screenshot({ path: 'campaigns-cookies.png' });
+        	console.log('[DEBUG] Куки-баннер не найден, скорее всего уже принят');
+        }
 		console.log('[DEBUG] Начинаем прокрутку и сбор названий по ходу...');
 
 		const collectedNames = new Set<string>();
@@ -84,7 +96,6 @@ export class TwitchService implements ITwitchService {
 		}
 
 		await page.evaluate(() => window.scrollBy(0, window.innerHeight));
-
 
 		await page.screenshot({ path: 'campaigns-final.png' });
 
