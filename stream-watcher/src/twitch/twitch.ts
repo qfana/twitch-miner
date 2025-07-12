@@ -51,55 +51,61 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 	    const context = this.browserService.getContext();
 	    const page = await context.newPage();
-
-	    console.log('[DEBUG] Зашли на viewer-rewards/drops...');
+	
+	    console.log('[DEBUG] Открываем Viewer Rewards Drops...');
 	    await page.goto('https://dashboard.twitch.tv/viewer-rewards/drops', {
 	        waitUntil: 'networkidle0',
 	        timeout: 60000,
 	    });
-
+	
 	    // Закрываем баннер согласия, если он есть
 	    const accept = await page.$('button[data-a-target="consent-banner-accept"]');
 	    if (accept) {
 	        console.log('[DEBUG] Нажимаем Accept и ждём обновления');
 	        await accept.click();
-	        await new Promise(resolve => setTimeout(resolve, 1500));
+	        await page.waitForTimeout(1500);
 	        await page.reload({ waitUntil: 'networkidle0' });
 	    }
-
-	    console.log('[DEBUG] Скроллим для подгрузки всего списка…');
-	    await page.evaluate(async () => {
-	        let lastHeight = 0;
-	        for (let i = 0; i < 20; i++) {
-	            window.scrollBy(0, window.innerHeight);
-	            await new Promise(r => setTimeout(r, 300));
-	            const newHeight = document.body.scrollHeight;
-	            if (newHeight === lastHeight) break;
-	            lastHeight = newHeight;
-	        }
-	    });
-
-	    await page.screenshot({ path: 'debug.png', fullPage: true });
-	    console.log('[DEBUG] Собираем названия игр…');
-
-	    // в Dashboard дропсы лежат в .accordion-header, а названия игр — первый <p> внутри
-	    const names = await page.$$eval(
-	        '.accordion-header p.CoreText-sc-1txzju1-0.dzXkjr:first-child',
-	        els => els.map(el => el.textContent!.trim())
+	
+	    console.log('[DEBUG] Собираем все карточки кампаний без прокрутки...');
+	    // каждая .accordion-header это кампания
+	    const campaigns = await page.$$eval('.accordion-header', nodes =>
+	        nodes.map(node => {
+	            const titleEl = node.querySelector('p.CoreText-sc-1txzju1-0.dzXkjr');
+	            const dateEl = node.querySelector('p.CoreText-sc-1txzju1-0.jPfhdT');
+	            if (!titleEl || !dateEl) return null;
+	            const title = titleEl.textContent?.trim() || '';
+	            const dateText = dateEl.textContent?.trim() || '';
+	            return { title, dateText };
+	        }).filter((c): c is { title: string; dateText: string } => !!c)
 	    );
-
+	
+	    console.log('[DEBUG] Всего кампаний:', campaigns.length);
+	
+	    // Оставляем только те, у которых дата начала >= сегодня
+	    const now = new Date();
+	    const active = campaigns.filter(({ dateText }) => {
+	        // dateText формат: "Sat, Jun 28, 6:00 PM GMT+3 - Mon, Aug 4, 6:00 PM GMT+3"
+	        const startPart = dateText.split('-')[0].trim();
+	        const startDate = new Date(startPart);
+	        return startDate >= now;
+	    });
+	
+	    console.log('[DEBUG] Активных по дате кампаний:', active.length);
+	
 	    await page.close();
-
+	
+	    // Преобразуем названия в слаги
 	    const slugs = Array.from(new Set(
-	        names.map(n =>
-	            n
-	              .toLowerCase()
-	              .replace(/[^a-z0-9]+/g, '-')
-	              .replace(/(^-+|-+$)/g, '')
+	        active.map(({ title }) =>
+	            title
+	                .toLowerCase()
+	                .replace(/[^a-z0-9]+/g, '-')
+	                .replace(/(^-+|-+$)/g, '')
 	        )
 	    ));
-
-	    console.log('[DEBUG] Активные игры с дропсами:', slugs);
+	
+	    console.log('[DEBUG] Активные игры с дропсами (слуги):', slugs);
 	    return slugs;
 	}
 
