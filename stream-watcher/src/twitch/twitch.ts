@@ -107,21 +107,28 @@ export class TwitchService implements ITwitchService {
 
 	    console.log('[DEBUG] Собираем все карточки кампаний без прокрутки...');
 	    // каждая .accordion-header это кампания
-	    const campaigns = await page.$$eval('.accordion-header', nodes =>
-	        nodes.map(node => {
-	            const titleEl = node.querySelector('p.CoreText-sc-1txzju1-0.dzXkjr');
-	            const dateEl = node.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
-	            if (!titleEl || !dateEl) return null;
-	            const title = titleEl.textContent?.trim() || '';
-	            const dateText = dateEl.textContent?.trim() || '';
-	            return { title, dateText };
-	        }).filter((c): c is { title: string; dateText: string } => !!c)
-	    );
+  		const campaigns: { name: string; dateText: string }[] = await page.$$eval(
+  		  	'.accordion-header',
+  		  	headers => headers.map(header => {
+  		  	  	// 1) имя кампании
+  		  	  	const nameDiv = Array.from(
+  		  	  	  	header.querySelectorAll('div.Layout-sc-1xcs6mc-0')
+  		  	  	).find(d => d.classList.contains('hJWyGb'));
+  		  	  	const name = nameDiv
+  		  	  	  	?.querySelector('p.CoreText-sc-1txzju1-0.dzXkjr')
+  		  	  	  	?.textContent?.trim() ?? '';
+			  
+  		  	  	// 2) текст с диапазоном дат из div.caYeGJ
+  		  	  	const dateDiv = header.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
+  		  	  	const dateText = dateDiv?.textContent?.trim() ?? '';
+			  
+  		  	  	return { name, dateText };
+  		  	})
+  		);
 
 	    console.log('[DEBUG] Всего кампаний:', campaigns.length);
 
 	    // Оставляем только те, у которых дата начала >= сегодня
-	    const now = new Date();
 	    const active = campaigns.filter(({ dateText }) => {
 			console.log(dateText)
 	        return hasCampaignStarted(dateText);
@@ -133,8 +140,8 @@ export class TwitchService implements ITwitchService {
 
 	    // Преобразуем названия в слаги
 	    const slugs = Array.from(new Set(
-    	    active.map(({ title }) =>
-    	        title
+    	    active.map(({ name }) =>
+    	        name
     	            .toLowerCase()
     	            .replace(/[^a-z0-9]+/g, '-')
     	            .replace(/(^-+|-+$)/g, '')
