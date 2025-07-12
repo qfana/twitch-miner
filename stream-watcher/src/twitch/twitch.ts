@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { BrowserService } from "../browser/browser";
 import { ITwitchService } from "./twitch.interface";
-import { ElementHandle } from 'puppeteer';
+import { ElementHandle, BrowserContext } from 'puppeteer';
 
 function hasCampaignStarted(dateRange: string): boolean {
     // русские месяцы в формате "янв.", "фев.", ... без точки / с точкой
@@ -125,7 +125,6 @@ export class TwitchService implements ITwitchService {
 
 	    console.log('[DEBUG] Всего кампаний:', campaigns.length);
 
-		console.log(campaigns)
 	    // Оставляем только те, у которых дата начала >= сегодня
 	    const active = campaigns.filter(({ dateText }) => {
 	        return hasCampaignStarted(dateText);
@@ -146,7 +145,7 @@ export class TwitchService implements ITwitchService {
     	    )
     	));
 
-	    console.log('[DEBUG] Активные игры с дропсами (слуги):', slugs);
+	    console.log('[DEBUG] Активные игры с дропсами:', slugs.length);
 	    return slugs;
 	}
 
@@ -189,10 +188,12 @@ export class TwitchService implements ITwitchService {
 	    }
 	
 	    // 5) Поднимаемся до корневого блока кампании (data-a-target="drop-campaign-card")
-	    const campaignCard = await campaignLink.evaluateHandle(el =>
-	        el.closest('div[data-a-target="drop-campaign-card"]')
-	    );
-	
+	    const jsHandle = await campaignLink.evaluateHandle(el =>
+		  	el.closest('div[data-a-target="drop-campaign-card"]')
+		);
+
+		const campaignCard = jsHandle.asElement() as ElementHandle<Element> | null;
+
 	    if (!campaignCard) {
 	        // на всякий случай — если вдруг структура поменялась
 	        await page.close();
@@ -200,7 +201,7 @@ export class TwitchService implements ITwitchService {
 	    }
 	
 	    // 6) Проверяем, есть ли hint «нет каналов» — если нет, значит дроп уже отключён
-	    const noChannelsHint = await (campaignCard as ElementHandle<HTMLAnchorElement>).$(
+	    const noChannelsHint = await (campaignCard as ElementHandle<Element>).$(
 	        'div[data-test-selector="DropsCampaignInProgressDescription-no-channels-hint-text"]'
 	    );
 	    if (!noChannelsHint) {
@@ -209,7 +210,7 @@ export class TwitchService implements ITwitchService {
 	    }
 	
 	    // 7) Собираем все прогресс-бары внутри этой карточки
-	    const bars = await (campaignCard as ElementHandle<HTMLAnchorElement>).$$('div.tw-progress-bar[role="progressbar"]');
+	    const bars = await (campaignCard as ElementHandle<Element>).$$('div.tw-progress-bar[role="progressbar"]');
 	    for (const bar of bars) {
 	        const now = await bar.evaluate(el => parseInt(el.getAttribute('aria-valuenow')!, 10));
 	        const max = await bar.evaluate(el => parseInt(el.getAttribute('aria-valuemax')!, 10));
