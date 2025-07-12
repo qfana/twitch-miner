@@ -47,43 +47,49 @@ export class TwitchService implements ITwitchService {
 		return random?.name || null;
 	}
 
+	// Метод для получения списка активных игр с дропсами (Dashboard)
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 	    const context = this.browserService.getContext();
-			const page = await context.newPage();
+	    const page = await context.newPage();
 
-	    console.log('[DEBUG] Зашли на drops/campaigns...');
+	    console.log('[DEBUG] Зашли на viewer-rewards/drops...');
 	    await page.goto('https://dashboard.twitch.tv/viewer-rewards/drops', {
-	        waitUntil: 'domcontentloaded',
+	        waitUntil: 'networkidle0',
 	        timeout: 60000,
-			});
+	    });
 
-	    // Если здесь вдруг висит баннер согласия — закроем его и перезагрузим страницу
-	    const acceptBtn = await page.$('button[data-a-target="consent-banner-accept"]');
-	    if (acceptBtn) {
-	        console.log('[DEBUG] Нашли баннер на /drops/campaigns — жмём Accept и перезагружаем');
-	        await acceptBtn.click();
-	        // даём время баннеру исчезнуть + запросам уйти
-			await new Promise(resolve => setTimeout(resolve, 3000)); // дать время странице обновиться
-	        await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
-			}
+	    // Закрываем баннер согласия, если он есть
+	    const accept = await page.$('button[data-a-target="consent-banner-accept"]');
+	    if (accept) {
+	        console.log('[DEBUG] Нажимаем Accept и ждём обновления');
+	        await accept.click();
+	        await page.waitForTimeout(1500);
+	        await page.reload({ waitUntil: 'networkidle0' });
+	    }
 
-	    console.log('[DEBUG] Прокрутка для подгрузки всех кампаний…');
+	    console.log('[DEBUG] Скроллим для подгрузки всего списка…');
 	    await page.evaluate(async () => {
-	        for (let i = 0; i < 15; i++) {
+	        let lastHeight = 0;
+	        for (let i = 0; i < 20; i++) {
 	            window.scrollBy(0, window.innerHeight);
-	            await new Promise(res => setTimeout(res, 400));
+	            await new Promise(r => setTimeout(r, 300));
+	            const newHeight = document.body.scrollHeight;
+	            if (newHeight === lastHeight) break;
+	            lastHeight = newHeight;
 	        }
-			});
+	    });
 
-		await page.screenshot({ path: 'debug.png', fullPage: true });
+	    await page.screenshot({ path: 'debug.png', fullPage: true });
 	    console.log('[DEBUG] Собираем названия игр…');
-	    const names = await page.$$eval(
-	        'div[role="heading"][aria-level="3"] p:first-child',
-	        els => els.map(el => el.textContent?.trim() ?? '').filter(Boolean)
-			);
 
-			await page.close();
-	
+	    // в Dashboard дропсы лежат в .accordion-header, а названия игр — первый <p> внутри
+	    const names = await page.$$eval(
+	        '.accordion-header p.CoreText-sc-1txzju1-0.dzXkjr:first-child',
+	        els => els.map(el => el.textContent!.trim())
+	    );
+
+	    await page.close();
+
 	    const slugs = Array.from(new Set(
 	        names.map(n =>
 	            n
@@ -91,7 +97,7 @@ export class TwitchService implements ITwitchService {
 	              .replace(/[^a-z0-9]+/g, '-')
 	              .replace(/(^-+|-+$)/g, '')
 	        )
-			));
+	    ));
 
 	    console.log('[DEBUG] Активные игры с дропсами:', slugs);
 	    return slugs;
