@@ -59,8 +59,9 @@ export class TwitchService implements ITwitchService {
 
 		if (!channels.length) return null;
 
-		const minViewers = channels.reduce((prev, curr) => (prev.viewers < curr.viewers ? prev : curr));
-		return minViewers.name;
+		console.log(channels)
+		// const minViewers = channels.reduce((prev, curr) => (prev.viewers < curr.viewers ? prev : curr));
+		return 'x';
 	}
 
 	async hasActiveDropCampaign(fullGameName: string): Promise<boolean> {
