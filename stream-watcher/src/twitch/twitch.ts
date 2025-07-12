@@ -57,8 +57,11 @@ export class TwitchService implements ITwitchService {
 
 		await page.waitForSelector('div[role="heading"][aria-level="3"] p', { timeout: 15000 });
 
-		const gameNames = await page.$$eval('div[role="heading"][aria-level="3"] p', (nodes) =>
-			nodes.map(n => n.textContent?.trim()).filter(Boolean)
+		const gameNames = await page.$$eval('div[role="heading"][aria-level="3"]', (headers) =>
+			headers.map(header => {
+				const p = header.querySelector('p');
+				return p?.textContent?.trim();
+			}).filter((name): name is string => !!name && name.length > 0)
 		);
 
 		await page.close();
