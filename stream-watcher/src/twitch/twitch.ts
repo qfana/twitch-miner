@@ -63,7 +63,7 @@ export class TwitchService implements ITwitchService {
 	    if (accept) {
 	        console.log('[DEBUG] Нажимаем Accept и ждём обновления');
 	        await accept.click();
-	        await page.waitForTimeout(1500);
+	        await new Promise(resolve => setTimeout(resolve, 1500));
 	        await page.reload({ waitUntil: 'networkidle0' });
 	    }
 
