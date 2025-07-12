@@ -46,24 +46,31 @@ export class TwitchService implements ITwitchService {
 		return random?.name || null;
 	}
 
-	async hasActiveDropCampaign(fullGameName: string): Promise<boolean> {
+	public async getActiveDropGameSlugs(): Promise<string[]> {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
 
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
 			waitUntil: 'domcontentloaded',
-			timeout: 60000
+			timeout: 60000,
 		});
 
-		// Ожидаем, пока React подгрузит список кампаний
-		await page.waitForSelector('a[href*="/directory/category/"]', { timeout: 15000 });
+		await page.waitForSelector('div[role="heading"][aria-level="3"] p', { timeout: 15000 });
 
-		const gamesWithDrops = await page.$$eval('a[href*="/directory/category/"]', (elements) =>
-			elements.map((el) => el.textContent?.trim())
+		const gameNames = await page.$$eval('div[role="heading"][aria-level="3"] p', (nodes) =>
+			nodes.map(n => n.textContent?.trim()).filter(Boolean)
 		);
 
 		await page.close();
 
-		return gamesWithDrops.includes(fullGameName);
+		const slugs = gameNames
+			.map(name => (name ?? '')
+				.toLowerCase()
+				.replace(/[^a-z0-9]/g, '-')
+				.replace(/(^-+|-+$)/g, '')
+			)
+			.filter(Boolean);
+
+		return [...new Set(slugs)];
 	}
 }

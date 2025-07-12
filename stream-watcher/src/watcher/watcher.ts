@@ -28,25 +28,31 @@ export class WatcherService implements IWatcherService {
 		if (this.intervalId) clearInterval(this.intervalId);
 		await this.browserService.destroy();
 		console.log('🛑 WatcherService остановлен');
-	}
+	}	
 
     private async checkAndWatch(): Promise<void> {
-        for (const game of this.gamePriorityList) {
-        	const channel = await this.twitchService.getTwitchDropChannel(game.slug);
-        	if (channel) {
-				await this.switchToStream(channel);
+		const activeDropSlugs = await this.twitchService.getActiveDropGameSlugs();
+
+		console.log('[DEBUG] Активные игры с дропсами:', activeDropSlugs);
+
+		for (const game of this.gamePriorityList) {
+			if (!activeDropSlugs.includes(game.slug)) continue;
+
+			const channel = await this.twitchService.getTwitchDropChannel(game.slug);
+			if (channel) {
+				await this.switchToStream(channel);	
 				return;
-        	}
-        }
-    
-        console.log('⚠️ Нет активных дропов — переключаемся на fallback стримы');
-        for (const fallback of this.fallbackChannels) {
-        	await this.switchToStream(fallback);
-        	return;
-        }
-        
-        console.log('⛔ Нет доступных стримов вообще');
-    }
+			}
+		}
+
+		console.log('⚠️ Нет активных дропов — переключаемся на fallback стримы');
+		for (const fallback of this.fallbackChannels) {
+			await this.switchToStream(fallback);
+			return;
+		}
+
+		console.log('⛔ Нет доступных стримов вообще');
+	}
 
     private async switchToStream(channel: string): Promise<void> {
 		if (this.currentStream === channel) return;
