@@ -180,6 +180,8 @@ export class TwitchService implements ITwitchService {
 	    const campaignLink = await page.$(
 	        `div.inventory-max-width a.tw-link[href*="/directory/category/${slug}"]`
 	    );
+
+		console.log('campaignLink', campaignLink)
 	
 	    if (!campaignLink) {
 	        // кампании нет в инвентаре — дроп НЕ получен на 100%
@@ -193,6 +195,8 @@ export class TwitchService implements ITwitchService {
 	    const handle = await campaignLink.evaluateHandle(el =>
     	    el.closest('.tw-tower')
     	);
+
+		console.log('handle', handle)
     	const tower = handle.asElement() as ElementHandle<Element> | null;
     	if (!tower) {
     	    // structure changed?
