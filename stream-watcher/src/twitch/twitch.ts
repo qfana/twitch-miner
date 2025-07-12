@@ -201,27 +201,35 @@ export class TwitchService implements ITwitchService {
     	}
 	
 	    // 6) Проверяем, есть ли hint «нет каналов» — если нет, значит дроп уже отключён
-	    const noChannelsHint = await (campaignCard as ElementHandle<Element>).$(
-	        'div[data-test-selector="DropsCampaignInProgressDescription-no-channels-hint-text"]'
-	    );
+	    const noChannelsHint = await tower.$(
+    	  '[data-test-selector="DropsCampaignInProgressDescription-no-channels-hint-text"]'
+    	);
 	    if (!noChannelsHint) {
 	        await page.close();
 	        return false;
 	    }
 	
 	    // 7) Собираем все прогресс-бары внутри этой карточки
-	    const bars = await (campaignCard as ElementHandle<Element>).$$('div.tw-progress-bar[role="progressbar"]');
+	    const bars = await tower.$$(
+	      'div.tw-progress-bar[role="progressbar"]'
+	    );
+
+	    // if any bar is not at 100%, you still can claim (→ return true)
 	    for (const bar of bars) {
-	        const now = await bar.evaluate(el => parseInt(el.getAttribute('aria-valuenow')!, 10));
-	        const max = await bar.evaluate(el => parseInt(el.getAttribute('aria-valuemax')!, 10));
+	        const now = parseInt(
+	            await bar.evaluate(el => el.getAttribute('aria-valuenow') || '0'),
+	            10
+	        );
+	        const max = parseInt(
+	            await bar.evaluate(el => el.getAttribute('aria-valuemax') || '0'),
+	            10
+	        );
 	        if (now < max) {
-	            // есть незавершённый прогресс
 	            await page.close();
-				console.log(2);
 	            return true;
 	        }
 	    }
-	
+		
 	    // всё заполнено — дроп уже получен
 	    await page.close();
 	    return false;
