@@ -197,6 +197,8 @@ export class TwitchService implements ITwitchService {
     	if (!tower) {
     	    // structure changed?
     	    await page.close();
+				console.log(2);
+
     	    return true;
     	}
 	
@@ -226,10 +228,11 @@ export class TwitchService implements ITwitchService {
 	        );
 	        if (now < max) {
 	            await page.close();
+				console.log(3);
 	            return true;
 	        }
 	    }
-		
+
 	    // всё заполнено — дроп уже получен
 	    await page.close();
 	    return false;
