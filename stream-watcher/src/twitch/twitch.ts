@@ -67,6 +67,8 @@ export class TwitchService implements ITwitchService {
 	        await page.reload({ waitUntil: 'networkidle0' });
 	    }
 
+		await page.screenshot({ path: 'screenshot.png' });
+
 	    console.log('[DEBUG] Собираем все карточки кампаний без прокрутки...');
 	    // каждая .accordion-header это кампания
 	    const campaigns = await page.$$eval('.accordion-header', nodes =>
