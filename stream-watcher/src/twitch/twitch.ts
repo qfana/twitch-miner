@@ -19,48 +19,32 @@ export class TwitchService implements ITwitchService {
 			await new Promise(resolve => setTimeout(resolve, 1000)); // дать время странице обновиться
 		}
 
-
 		try {
-			await page.waitForSelector('a[data-a-target="preview-card-title-link"]', { timeout: 15000 });
-
+			await page.waitForSelector('a.preview-card-channel-link', {
+				timeout: 15000
+			});
 		} catch (err) {
 			console.warn(`[TwitchService] Нет активных стримов для игры ${gameSlug}`);
 			await page.close();
 			return null;
 		}
 
-		const channels: { name: string; viewers: number }[] = await page.$$eval('div[data-a-target="preview-card"]', (cards) => {
-			return cards
-				.map(card => {
-					const dropsBadge = card.innerText.includes('DropsВключены') || card.innerText.includes('DropsEnabled');
-					if (!dropsBadge) return null;
-				
-					const link = card.querySelector('a[data-a-target="preview-card-title-link"]');
-					const viewersText = card.querySelector('[data-a-target="tw-stat-text"]')?.textContent || '';
-				
-					let viewers = 0;
-					if (viewersText.includes('тыс.')) {
-						viewers = parseFloat(viewersText.replace(/[^\d.]/g, '')) * 1000;
-					} else {
-						viewers = parseInt(viewersText.replace(/[^\d]/g, ''));
-					}
-				
-					return {
-						name: link?.getAttribute('href')?.replace('/', '') || '',
-						viewers,
-					};
-				})
-				.filter((x): x is { name: string; viewers: number } => Boolean(x)); // 👈 фильтрация с типизацией
+		const channels: ({ name: string; viewers: number } | null)[] = await page.$$eval('a.preview-card-channel-link', (links) => {
+			return links.map(link => {
+				const href = link.getAttribute('href');
+				if (!href) return null;
+				return { name: href.replace('/', ''), viewers: 0 }; // viewers позже, если нужно
+			}).filter(Boolean);
 		});
-
+	
 		await page.close();
 		await context.close();
-
+	
 		if (!channels.length) return null;
-
-		console.log(channels)
-		const minViewers = channels.reduce((prev, curr) => (prev.viewers < curr.viewers ? prev : curr));
-		return minViewers.name;
+	
+		// Можно сделать случайный выбор или вернуть первый:
+		const random = channels[Math.floor(Math.random() * channels.length)];
+		return random?.name || null;
 	}
 
 	async hasActiveDropCampaign(fullGameName: string): Promise<boolean> {
