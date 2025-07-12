@@ -57,37 +57,39 @@ export class TwitchService implements ITwitchService {
 	
 		console.log('[DEBUG] Начинаем прокрутку страницы');
 	
-		// Прокрутка страницы, чтобы подгрузились все дропы
+		// Прокрутка для подгрузки всех элементов
 		await page.evaluate(async () => {
-			for (let i = 0; i < 15; i++) {
+			for (let i = 0; i < 20; i++) {
 				window.scrollBy(0, window.innerHeight);
-				await new Promise(resolve => setTimeout(resolve, 400));
+				await new Promise(resolve => setTimeout(resolve, 300));
 			}
 		});
 	
-		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор alt-атрибутов...');
+		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор заголовков...');
 	
-		const gameNames = await page.$$eval('button.accordion-header img[alt]', imgs =>
-			imgs
-				.map(img => img.getAttribute('alt')?.trim())
-				.filter((name): name is string => !!name && name.length > 0)
-		);
-	
-		console.log('[DEBUG] Найдено игр:', gameNames);
+		// Извлекаем текст из нужных <p> — тот, что содержит название игры
+		const gameNames = await page.$$eval('button.accordion-header p', (elements) => {
+			return Array.from(elements)
+				.map(el => el.textContent?.trim())
+				.filter((text, i, arr) => {
+					// Фильтруем null, пустые и дубликаты
+					return !!text && arr.indexOf(text) === i;
+				}) as string[];
+		});
 	
 		await page.close();
 	
+		console.log('[DEBUG] Найдено игр:', gameNames);
+	
 		const slugs = gameNames
-			.map(name =>
-				name
-					.toLowerCase()
-					.replace(/[^a-z0-9]+/g, '-')     // заменить всё, кроме a-z0-9, на -
-					.replace(/(^-+|-+$)/g, '')        // удалить дефисы в начале и конце
+			.map(name => name
+				.toLowerCase()
+				.replace(/[^a-z0-9]+/g, '-')
+				.replace(/(^-+|-+$)/g, '')
 			)
 			.filter(Boolean);
 		
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
-		
 		return [...new Set(slugs)];
 	}
 
