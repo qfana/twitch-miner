@@ -75,6 +75,7 @@ export class TwitchService implements ITwitchService {
 	        }
 			});
 
+		await page.screenshot({ path: 'debug.png', fullPage: true });
 	    console.log('[DEBUG] Собираем названия игр…');
 	    const names = await page.$$eval(
 	        'div[role="heading"][aria-level="3"] p:first-child',
@@ -82,7 +83,7 @@ export class TwitchService implements ITwitchService {
 			);
 
 			await page.close();
-
+	
 	    const slugs = Array.from(new Set(
 	        names.map(n =>
 	            n
