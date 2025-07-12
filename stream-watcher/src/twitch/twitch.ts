@@ -184,6 +184,8 @@ export class TwitchService implements ITwitchService {
 	    if (!campaignLink) {
 	        // кампании нет в инвентаре — дроп НЕ получен на 100%
 	        await page.close();
+			console.log(3);
+
 	        return true;
 	    }
 	
@@ -196,6 +198,7 @@ export class TwitchService implements ITwitchService {
 
 	    if (!campaignCard) {
 	        // на всякий случай — если вдруг структура поменялась
+			console.log(1);
 	        await page.close();
 	        return true;
 	    }
@@ -217,6 +220,7 @@ export class TwitchService implements ITwitchService {
 	        if (now < max) {
 	            // есть незавершённый прогресс
 	            await page.close();
+				console.log(2);
 	            return true;
 	        }
 	    }
