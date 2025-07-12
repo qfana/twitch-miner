@@ -2,6 +2,42 @@ import fs from 'fs';
 import { BrowserService } from "../browser/browser";
 import { ITwitchService } from "./twitch.interface";
 
+function hasCampaignStarted(dateRange: string): boolean {
+    // русские месяцы в формате "янв.", "фев.", ... без точки / с точкой
+    const monthsMap: Record<string, number> = {
+        'янв': 0, 'фев': 1, 'мар': 2, 'апр': 3, 'май': 4, 'июн': 5,
+        'июл': 6, 'авг': 7, 'сен': 8, 'окт': 9, 'ноя': 10, 'дек': 11
+    };
+
+    // 1. Отделяем часть до дефиса
+    const [startPart] = dateRange.split(' - ');
+    // пример startPart: "вт, 24 июн., 18:00"
+
+    // 2. Убираем день недели и запятые, остаётся "24 июн. 18:00"
+    const cleaned = startPart
+        .replace(/^[^,]*,\s*/, '')     // убираем "вт, "
+        .replace(/\./g, '')            // убираем точки из "июн."
+        .trim();                       // "24 июн 18:00"
+
+    // 3. Разбиваем на дату и время
+    const [dayStr, monthStr, timeStr] = cleaned.split(/\s+/);
+    const [hourStr, minuteStr] = timeStr.split(':');
+
+    const day   = parseInt(dayStr, 10);
+    const month = monthsMap[monthStr.toLowerCase()];
+    const hour  = parseInt(hourStr, 10);
+    const minute= parseInt(minuteStr, 10);
+
+    // 4. Берём текущий год
+    const now    = new Date();
+    const year   = now.getFullYear();
+
+    // 5. Собираем дату старта в локальной временной зоне
+    const startDate = new Date(year, month, day, hour, minute);
+
+    // 6. Сравниваем
+    return now.getTime() >= startDate.getTime();
+}
 export class TwitchService implements ITwitchService {
 	constructor(private readonly browserService: BrowserService) {}
     
@@ -87,10 +123,7 @@ export class TwitchService implements ITwitchService {
 	    // Оставляем только те, у которых дата начала >= сегодня
 	    const now = new Date();
 	    const active = campaigns.filter(({ dateText }) => {
-	        // dateText формат: "Sat, Jun 28, 6:00 PM GMT+3 - Mon, Aug 4, 6:00 PM GMT+3"
-	        const startPart = dateText.split('-')[0].trim();
-	        const startDate = new Date(startPart);
-	        return startDate >= now;
+	        return hasCampaignStarted(dateText);
 	    });
 
 	    console.log('[DEBUG] Активных по дате кампаний:', active.length);
@@ -99,13 +132,13 @@ export class TwitchService implements ITwitchService {
 
 	    // Преобразуем названия в слаги
 	    const slugs = Array.from(new Set(
-	        active.map(({ title }) =>
-	            title
-	                .toLowerCase()
-	                .replace(/[^a-z0-9]+/g, '-')
-	                .replace(/(^-+|-+$)/g, '')
-	        )
-	    ));
+    	    campaigns.map(({ title }) =>
+    	        title
+    	            .toLowerCase()
+    	            .replace(/[^a-z0-9]+/g, '-')
+    	            .replace(/(^-+|-+$)/g, '')
+    	    )
+    	));
 
 	    console.log('[DEBUG] Активные игры с дропсами (слуги):', slugs);
 	    return slugs;
