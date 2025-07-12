@@ -49,14 +49,14 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
-	
+
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
 			waitUntil: 'domcontentloaded',
 			timeout: 60000,
 		});
-	
+
 		console.log('[DEBUG] Начинаем прокрутку страницы');
-	
+
 		// Прокрутка для подгрузки всех элементов
 		await page.evaluate(async () => {
 			for (let i = 0; i < 20; i++) {
@@ -64,23 +64,26 @@ export class TwitchService implements ITwitchService {
 				await new Promise(resolve => setTimeout(resolve, 300));
 			}
 		});
-	
+
 		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор заголовков...');
-	
+
 		// Извлекаем текст из нужных <p> — тот, что содержит название игры
-		const gameNames = await page.$$eval('button.accordion-header p', (elements) => {
-			return Array.from(elements)
-				.map(el => el.textContent?.trim())
-				.filter((text, i, arr) => {
-					// Фильтруем null, пустые и дубликаты
-					return !!text && arr.indexOf(text) === i;
-				}) as string[];
+		const gameNames = await page.$$eval('button.accordion-header', (buttons) => {
+			return buttons.map(button => {
+				const paragraphs = button.querySelectorAll('p');
+				if (paragraphs.length > 0) {
+					const gameName = paragraphs[0].textContent?.trim();
+					return gameName ?? null;
+				}
+				return null;
+			}).filter((text): text is string => !!text);
 		});
-	
+
+
 		await page.close();
-	
+
 		console.log('[DEBUG] Найдено игр:', gameNames);
-	
+
 		const slugs = gameNames
 			.map(name => name
 				.toLowerCase()
@@ -88,7 +91,7 @@ export class TwitchService implements ITwitchService {
 				.replace(/(^-+|-+$)/g, '')
 			)
 			.filter(Boolean);
-		
+
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
 		return [...new Set(slugs)];
 	}
