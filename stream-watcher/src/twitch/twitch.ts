@@ -49,45 +49,46 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
-
+	
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
 			waitUntil: 'domcontentloaded',
 			timeout: 60000,
 		});
-
+	
 		console.log('[DEBUG] Начинаем прокрутку страницы');
-
+	
+		// Прокрутка страницы, чтобы подгрузились все дропы
 		await page.evaluate(async () => {
 			for (let i = 0; i < 15; i++) {
 				window.scrollBy(0, window.innerHeight);
-				await new Promise(resolve => setTimeout(resolve, 300));
+				await new Promise(resolve => setTimeout(resolve, 400));
 			}
 		});
-
+	
 		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор alt-атрибутов...');
-
-		const gameNames = await page.$$eval('img[alt]', (imgs) => {
-			const names = imgs.map(img => img.getAttribute('alt')?.trim()).filter(Boolean);
-			return Array.from(new Set(names)); // уникальные
-		});
-
+	
+		const gameNames = await page.$$eval('button.accordion-header img[alt]', imgs =>
+			imgs
+				.map(img => img.getAttribute('alt')?.trim())
+				.filter((name): name is string => !!name && name.length > 0)
+		);
+	
 		console.log('[DEBUG] Найдено игр:', gameNames);
-
+	
 		await page.close();
-
+	
 		const slugs = gameNames
-			.filter((n): n is string => typeof n === 'string')
-			.map(name => name
-				.toLowerCase()
-				.replace(/[^a-z0-9]+/g, '-')
-				.replace(/(^-+|-+$)/g, '')
+			.map(name =>
+				name
+					.toLowerCase()
+					.replace(/[^a-z0-9]+/g, '-')     // заменить всё, кроме a-z0-9, на -
+					.replace(/(^-+|-+$)/g, '')        // удалить дефисы в начале и конце
 			)
 			.filter(Boolean);
-
+		
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
-
-		return slugs;
+		
+		return [...new Set(slugs)];
 	}
-
 
 }
