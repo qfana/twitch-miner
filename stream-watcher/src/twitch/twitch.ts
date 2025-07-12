@@ -49,66 +49,48 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
-
+	
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
 			waitUntil: 'domcontentloaded',
 			timeout: 60000,
 		});
-
-		await page.waitForSelector('div[role="heading"][aria-level="3"] p', { timeout: 15000 });
-
+	
 		console.log('[DEBUG] Начинаем прокрутку страницы');
-
-		// РЕАЛЬНЫЙ СКРОЛЛ ДО КОНЦА СТРАНИЦЫ
-		let previousHeight = await page.evaluate('document.body.scrollHeight');
-		let attempts = 0;
-
-		while (attempts < 5) {
-			await page.evaluate(() => {
+	
+		// Прокрутка страницы
+		await page.evaluate(async () => {
+			for (let i = 0; i < 15; i++) {
 				window.scrollBy(0, window.innerHeight);
-			});
-			await new Promise(resolve => setTimeout(resolve, 700));
-			const currentHeight = await page.evaluate('document.body.scrollHeight');
-
-			if (currentHeight === previousHeight) {
-				attempts++;
-			} else {
-				attempts = 0;
-				previousHeight = currentHeight;
+				await new Promise(resolve => setTimeout(resolve, 400));
 			}
-		}
-
+		});
+	
 		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор заголовков...');
-
-		const gameNames = await page.$$eval('div[role="heading"][aria-level="3"]', (headers) =>
-			headers.map(header => {
-				const ps = header.querySelectorAll('p');
-				let gameName = '';
-			
-				if (ps.length === 1) {
-					gameName = ps[0].textContent?.trim() ?? '';
-				} else if (ps.length >= 2) {
-					// Если второй параграф — это название игры (как "PUBG: BATTLEGROUNDS")
-					gameName = ps[1].textContent?.trim() ?? ps[0].textContent?.trim() ?? '';
+	
+		const gameNames = await page.$$eval('button.accordion-header', (nodes) => {
+			return nodes.map(btn => {
+				const paragraphs = btn.querySelectorAll('p');
+				if (paragraphs.length >= 1) {
+					const name = paragraphs[0]?.textContent?.trim();
+					if (name) return name;
 				}
-			
-				return gameName;
-			}).filter(name => !!name && name.length > 0)
-		);
-
-
+				return null;
+			}).filter(Boolean) as string[];
+		});
+	
 		await page.close();
-
+	
 		const slugs = gameNames
-			.map(name => name
-				.toLowerCase()
-				.replace(/[^a-z0-9]/g, '-')
-				.replace(/(^-+|-+$)/g, '')
+			.map(name =>
+				name
+					.toLowerCase()
+					.replace(/[^a-z0-9]+/g, '-') // заменяем всё, кроме a-z и 0-9 на дефис
+					.replace(/(^-+|-+$)/g, '') // удаляем дефисы с начала и конца
 			)
 			.filter(Boolean);
-
+		
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
-
+		
 		return [...new Set(slugs)];
 	}
 
