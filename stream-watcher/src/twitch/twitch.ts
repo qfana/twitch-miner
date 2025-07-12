@@ -50,33 +50,42 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
-
+	
 		console.log('[DEBUG] Загружаем страницу...');
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
 			waitUntil: 'domcontentloaded',
 			timeout: 60000,
 		});
-
+	
 		console.log('[DEBUG] Начинаем прокрутку страницы...');
 		await page.evaluate(async () => {
-			for (let i = 0; i < 15; i++) {
+			for (let i = 0; i < 20; i++) {
 				window.scrollBy(0, window.innerHeight);
-				await new Promise(resolve => setTimeout(resolve, 400));
+				await new Promise(resolve => setTimeout(resolve, 300));
 			}
 		});
-		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор названий...');
-
-		const names = await page.$$eval('button.accordion-header p', (nodes) =>
-			nodes.map(el => el.textContent?.trim()).filter(Boolean)
+		console.log('[DEBUG] Прокрутка завершена.');
+	
+		// Извлекаем названия игр из <p> внутри .accordion-header
+		const gameNames = await page.$$eval('button.accordion-header p', elements =>
+			elements.map(el => el.textContent?.trim()).filter((name): name is string => !!name)
 		);
-
+	
+		console.log('[DEBUG] Имена игр до обработки:', gameNames);
+	
 		await page.close();
-
-		const slugs = names
-			.map(name => name!.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, ''))
+	
+		const slugs = gameNames
+			.map(name =>
+				name
+					.toLowerCase()
+					.replace(/[^a-z0-9]+/g, '-') // заменить все не a-z0-9 на дефис
+					.replace(/(^-+|-+$)/g, '') // удалить дефисы с начала и конца
+			)
 			.filter(Boolean);
-
+		
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
+		
 		return [...new Set(slugs)];
 	}
 
