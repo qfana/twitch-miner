@@ -28,13 +28,6 @@ export class BrowserService implements IBrowserService {
 
     public async setCookie(): Promise<void> {
         const page = await this.context?.newPage();
-        console.log('[DEBUG] Using AUTH_TOKEN:', this.AUTH_TOKEN);
-        await page.setUserAgent(
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
-            'AppleWebKit/537.36 (KHTML, like Gecko) ' +
-            'Chrome/115.0.0.0 Safari/537.36'
-        );
-
         const existing = await page.cookies();
         if (existing.length) await page.deleteCookie(...existing);
 

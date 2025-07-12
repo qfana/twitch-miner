@@ -58,25 +58,23 @@ export class TwitchService implements ITwitchService {
 
 		await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36');
 
+    	await page.goto('https://www.twitch.tv', { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-		console.log('[DEBUG] Загружаем страницу...');
-		await page.goto('https://www.twitch.tv/drops/campaigns', {
-			waitUntil: 'domcontentloaded',
-			timeout: 60000,
-		});
+    	// 2) Если появился consent, нажать:
+    	const accept = await page.$('button[data-a-target="consent-banner-accept"]');
+    	if (accept) {
+    	    console.log('[DEBUG] Нажимаем Accept на cookie-banner');
+    	    await accept.click();
+    	    // даём странице время скрыть баннер:
+        	await new Promise(resolve => setTimeout(resolve, 1500));
+    	}
 
-
+    	console.log('[DEBUG] Теперь перелетаем на Drops campaigns…');
+    	await page.goto('https://www.twitch.tv/drops/campaigns', {
+    	    waitUntil: 'domcontentloaded',
+    	    timeout: 60000,
+    	});
 		
-        try {
-        	await page.waitForSelector('button[data-a-target="consent-banner-accept"]', { timeout: 5000 });
-        	await page.click('button[data-a-target="consent-banner-accept"]');
-        	console.log('[DEBUG] Кликнули на "Принять" куки-баннер');
-        	// Немного подождём, чтобы страница успела прогрузить новые данные
-        	await new Promise(resolve => setTimeout(resolve, 3000));
-        } catch (err) {
-		    await page.screenshot({ path: 'campaigns-cookies.png' });
-        	console.log('[DEBUG] Куки-баннер не найден, скорее всего уже принят');
-        }
 		console.log('[DEBUG] Начинаем прокрутку и сбор названий по ходу...');
 
 		const collectedNames = new Set<string>();
