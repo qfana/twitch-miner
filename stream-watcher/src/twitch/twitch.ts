@@ -13,7 +13,22 @@ export class TwitchService implements ITwitchService {
 			timeout: 60000
 		});
 
-		await page.waitForSelector('a[data-a-target="preview-card-title-link"]', { timeout: 15000 });
+		const acceptBtn = await page.$('button[data-a-target="consent-banner-accept"]');
+		if (acceptBtn) {
+			await acceptBtn.click();
+			await new Promise(resolve => setTimeout(resolve, 1000)); // дать время странице обновиться
+		}
+
+
+		try {
+			await page.waitForSelector('a[data-a-target="preview-card-title-link"]', {
+				timeout: 15000,
+			});
+		} catch (err) {
+			console.warn(`[TwitchService] Нет активных стримов для игры ${gameName}`);
+			await page.close();
+			return null;
+		}
 
 		const channels = await page.$$eval('a[data-a-target="preview-card-title-link"]', (elements) => {
 			return elements.map((el) => {
