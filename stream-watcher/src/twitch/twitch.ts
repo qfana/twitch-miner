@@ -133,7 +133,7 @@ export class TwitchService implements ITwitchService {
 
 	    // Преобразуем названия в слаги
 	    const slugs = Array.from(new Set(
-    	    campaigns.map(({ title }) =>
+    	    active.map(({ title }) =>
     	        title
     	            .toLowerCase()
     	            .replace(/[^a-z0-9]+/g, '-')
