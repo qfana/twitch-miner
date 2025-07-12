@@ -192,12 +192,11 @@ export class TwitchService implements ITwitchService {
 	    }
 	
 	    // 5) Поднимаемся до корневого блока кампании (data-a-target="drop-campaign-card")
-	    const handle = await campaignLink.evaluateHandle(el =>
-    	    el.closest('.tw-tower')
-    	);
-
-		console.log('handle', handle)
-    	const tower = handle.asElement() as ElementHandle<Element> | null;
+	    const towerHandle = await page.evaluateHandle(
+		  	(el: HTMLElement) => el.closest('div.tw-tower'),
+		  	campaignLink
+		);
+		const tower = towerHandle.asElement() as ElementHandle<Element> | null;
     	if (!tower) {
     	    // structure changed?
     	    await page.close();
