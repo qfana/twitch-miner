@@ -5,8 +5,8 @@ import { ITwitchService } from "./twitch.interface";
 function hasCampaignStarted(dateRange: string): boolean {
     // русские месяцы в формате "янв.", "фев.", ... без точки / с точкой
     const monthsMap: Record<string, number> = {
-        'янв': 0, 'фев': 1, 'мар': 2, 'апр': 3, 'май': 4, 'июн': 5,
-        'июл': 6, 'авг': 7, 'сен': 8, 'окт': 9, 'ноя': 10, 'дек': 11
+        'янв,': 0, 'фев,': 1, 'мар,': 2, 'апр,': 3, 'май,': 4, 'июн,': 5,
+        'июл,': 6, 'авг,': 7, 'сен,': 8, 'окт,': 9, 'ноя,': 10, 'дек,': 11
     };
 
     // 1. Отделяем часть до дефиса
@@ -24,7 +24,6 @@ function hasCampaignStarted(dateRange: string): boolean {
     const [hourStr, minuteStr] = timeStr.split(':');
 
     const day   = parseInt(dayStr, 10);
-	console.log(monthStr)
     const month = monthsMap[monthStr.toLowerCase()];
     const hour  = parseInt(hourStr, 10);
     const minute= parseInt(minuteStr, 10);
