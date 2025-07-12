@@ -51,22 +51,22 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 	    const context = this.browserService.getContext();
 	    const page = await context.newPage();
-	
+
 	    console.log('[DEBUG] Открываем Viewer Rewards Drops...');
 	    await page.goto('https://dashboard.twitch.tv/viewer-rewards/drops', {
 	        waitUntil: 'networkidle0',
 	        timeout: 60000,
 	    });
-	
+
 	    // Закрываем баннер согласия, если он есть
 	    const accept = await page.$('button[data-a-target="consent-banner-accept"]');
 	    if (accept) {
 	        console.log('[DEBUG] Нажимаем Accept и ждём обновления');
 	        await accept.click();
-	        await page.waitForTimeout(1500);
+	        await new Promise(resolve => setTimeout(resolve, 2000));
 	        await page.reload({ waitUntil: 'networkidle0' });
 	    }
-	
+
 	    console.log('[DEBUG] Собираем все карточки кампаний без прокрутки...');
 	    // каждая .accordion-header это кампания
 	    const campaigns = await page.$$eval('.accordion-header', nodes =>
@@ -79,9 +79,9 @@ export class TwitchService implements ITwitchService {
 	            return { title, dateText };
 	        }).filter((c): c is { title: string; dateText: string } => !!c)
 	    );
-	
+
 	    console.log('[DEBUG] Всего кампаний:', campaigns.length);
-	
+
 	    // Оставляем только те, у которых дата начала >= сегодня
 	    const now = new Date();
 	    const active = campaigns.filter(({ dateText }) => {
@@ -90,11 +90,11 @@ export class TwitchService implements ITwitchService {
 	        const startDate = new Date(startPart);
 	        return startDate >= now;
 	    });
-	
+
 	    console.log('[DEBUG] Активных по дате кампаний:', active.length);
-	
+
 	    await page.close();
-	
+
 	    // Преобразуем названия в слаги
 	    const slugs = Array.from(new Set(
 	        active.map(({ title }) =>
@@ -104,7 +104,7 @@ export class TwitchService implements ITwitchService {
 	                .replace(/(^-+|-+$)/g, '')
 	        )
 	    ));
-	
+
 	    console.log('[DEBUG] Активные игры с дропсами (слуги):', slugs);
 	    return slugs;
 	}
