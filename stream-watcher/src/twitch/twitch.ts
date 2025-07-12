@@ -52,7 +52,7 @@ export class TwitchService implements ITwitchService {
 			const page = await context.newPage();
 
 	    console.log('[DEBUG] Зашли на drops/campaigns...');
-	    await page.goto('https://www.twitch.tv/drops/campaigns', {
+	    await page.goto('https://dashboard.twitch.tv/viewer-rewards/drops', {
 	        waitUntil: 'domcontentloaded',
 	        timeout: 60000,
 			});
