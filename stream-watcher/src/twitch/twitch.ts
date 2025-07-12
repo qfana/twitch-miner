@@ -62,6 +62,8 @@ export class TwitchService implements ITwitchService {
 
     	// 2) Если появился consent, нажать:
     	const accept = await page.$('button[data-a-target="consent-banner-accept"]');
+		await page.screenshot({ path: 'campaigns-1.png' });
+
     	if (accept) {
     	    console.log('[DEBUG] Нажимаем Accept на cookie-banner');
     	    await accept.click();
