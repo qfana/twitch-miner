@@ -165,8 +165,8 @@ export class TwitchService implements ITwitchService {
 		// Ждём, пока подгрузятся прогресс-бары
 		await page.waitForSelector('div[role="progressbar"]', { timeout: 15000 });
 
-		const hasUnfinishedDrop = await page.$$eval('div[role="progressbar"]', (bars, targetSlug) => {
-			return bars.some(bar => {
+		const test = await page.$$eval('div[role="progressbar"]', (bars, targetSlug) => {
+			bars.forEach(bar => {
 				const parentCard = bar.closest('div[data-a-target="drop-campaign-card"]');
 				console.log('parentCard', parentCard);
 				if (!parentCard) return false;
@@ -180,6 +180,7 @@ export class TwitchService implements ITwitchService {
 			});
 		}, slug);
 
+		const hasUnfinishedDrop = false;
 
 		await page.close();
 		console.log(`[DEBUG] Для ${slug} незавершённый дроп найден:`, hasUnfinishedDrop);
