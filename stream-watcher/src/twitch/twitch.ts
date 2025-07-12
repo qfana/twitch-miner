@@ -57,38 +57,47 @@ export class TwitchService implements ITwitchService {
 
 		console.log('[DEBUG] Начинаем прокрутку страницы');
 
-		// Прокрутка для подгрузки всех элементов
+		// Прокрутка
 		await page.evaluate(async () => {
-			for (let i = 0; i < 20; i++) {
+			for (let i = 0; i < 15; i++) {
 				window.scrollBy(0, window.innerHeight);
-				await new Promise(resolve => setTimeout(resolve, 300));
+				await new Promise(resolve => setTimeout(resolve, 400));
 			}
 		});
 
 		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор заголовков...');
 
-		// Извлекаем текст из нужных <p> — тот, что содержит название игры
 		const gameNames = await page.$$eval('button.accordion-header', (buttons) => {
-			return buttons.map(button => {
-				const paragraphs = button.querySelectorAll('p');
-				if (paragraphs.length > 0) {
-					const gameName = paragraphs[0].textContent?.trim();
-					return gameName ?? null;
+			console.log('[DEBUG] Найдено кнопок:', buttons.length);
+
+			const names: string[] = [];
+
+			buttons.forEach((btn, index) => {
+				const pTags = btn.querySelectorAll('p');
+				console.log(`[DEBUG] [${index}] Кол-во <p>:`, pTags.length);
+
+				if (pTags.length === 2) {
+					const name = pTags[0].textContent?.trim();
+					if (name) {
+						console.log(`[DEBUG] [${index}] Найдено имя:`, name);
+						names.push(name);
+					}
 				}
-				return null;
-			}).filter((text): text is string => !!text);
+			});
+
+			return names;
 		});
-
-
-		await page.close();
 
 		console.log('[DEBUG] Найдено игр:', gameNames);
 
+		await page.close();
+
 		const slugs = gameNames
-			.map(name => name
-				.toLowerCase()
-				.replace(/[^a-z0-9]+/g, '-')
-				.replace(/(^-+|-+$)/g, '')
+			.map(name =>
+				name
+					.toLowerCase()
+					.replace(/[^a-z0-9]+/g, '-') // всё кроме латиницы и цифр в дефис
+					.replace(/(^-+|-+$)/g, '')   // удалить начальные и конечные дефисы
 			)
 			.filter(Boolean);
 
