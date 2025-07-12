@@ -50,37 +50,45 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
-	
+
+		await page.setViewport({
+			width: 1280,
+			height: 3000,
+		});
+
+		await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36');
+
+
 		console.log('[DEBUG] Загружаем страницу...');
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
 			waitUntil: 'domcontentloaded',
 			timeout: 60000,
 		});
-	
+
 		console.log('[DEBUG] Начинаем прокрутку и сбор названий по ходу...');
-	
+
 		const collectedNames = new Set<string>();
-	
+
 		for (let i = 0; i < 50; i++) {
 			// Собираем текущие видимые элементы
 			const newNames = await page.$$eval('p.CoreText-sc-1txzju1-0.dzXkjr', (nodes) =>
 				nodes.map(el => el.textContent?.trim()).filter(Boolean)
 			);
-		
+
 			newNames.forEach(name => {
 				if (name) collectedNames.add(name);
 			});
-		
+
 			await page.evaluate(() => window.scrollBy(0, window.innerHeight));
 			await new Promise(resolve => setTimeout(resolve, 500));
 		}
-	
+
 		await page.close();
-	
+
 		const slugs = Array.from(collectedNames)
 			.map(name => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, ''))
 			.filter(Boolean);
-	
+
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
 		return slugs;
 	}
