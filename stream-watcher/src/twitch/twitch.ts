@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { BrowserService } from "../browser/browser";
 import { ITwitchService } from "./twitch.interface";
+import { ElementHandle } from 'puppeteer';
 
 function hasCampaignStarted(dateRange: string): boolean {
     // русские месяцы в формате "янв.", "фев.", ... без точки / с точкой
@@ -151,57 +152,78 @@ export class TwitchService implements ITwitchService {
 
 
 	// Метод для проверки, есть ли незавершённые дропы по игре
+	/**
+	 * true  — если ещё можно получить дроп за просмотр стрима;
+	 * false — если дроп уже получен или недоступен.
+	 */
 	public async isDropClaimed(slug: string): Promise<boolean> {
-		const ctx = this.browserService.getContext();
- 		const page = await ctx.newPage();
-
- 		// Заходим на страницу инвентаря Drops
- 		await page.goto('https://www.twitch.tv/drops/inventory', {
- 		  	waitUntil: 'networkidle0',
- 		  	timeout: 60000,
- 		});
-
- 		// Если есть баннер cookie — закрываем его
- 		const consent = await page.$('button[data-a-target="consent-banner-accept"]');
- 		if (consent) {
- 		  	await consent.click();
- 		  	await new Promise(resolve => setTimeout(resolve, 2000));
- 		  	await page.reload({ waitUntil: 'networkidle0' });
- 		}
-
- 		// Ждём, пока прогрузятся карточки инвентаря
- 		await page.waitForSelector('div[data-a-target="drop-campaign-card"]', { timeout: 15000 });
-
- 		// 1) Находим карточку нужной кампании по href
- 		const campaignHandle = await page.$(
- 		  	`a[data-test-selector="DropsCampaignInProgressDescription-no-channels-hint-text"]
- 		  		+ a.tw-link[href*="/directory/category/${slug}"]`
- 		);
-
- 		if (!campaignHandle) {
- 		  // кампания вообще не показана — значит дроп не получен на 100%
- 		  await page.close();
- 		  return true;
- 		}
-
- 		// 3) Ищем внутри этой карточки все прогресс-бары
- 		const progressBars = await campaignHandle.$$(
- 		  	'div.tw-progress-bar[role="progressbar"]'
- 		);
-
- 		for (const bar of progressBars) {
- 		  	const now = await bar.evaluate(el => parseInt(el.getAttribute('aria-valuenow')!, 10));
- 		  	const max = await bar.evaluate(el => parseInt(el.getAttribute('aria-valuemax')!, 10));
- 		  	if (now < max) {
- 		  	  // хоть один бар не довязан до max — дроп ещё можно получить
- 		  	  await page.close();
- 		  	  return true;
- 		  	}
- 		}
-
- 		// все бары полные — дроп получен
- 		await page.close();
- 		return false;
+	    const ctx = this.browserService.getContext();
+	    const page = await ctx.newPage();
+	
+	    // 1) Открываем инвентарь дропсов
+	    await page.goto('https://www.twitch.tv/drops/inventory', {
+	        waitUntil: 'networkidle0',
+	        timeout: 60000,
+	    });
+	
+	    // 2) Закрываем баннер согласия, если он есть
+	    const consent = await page.$('button[data-a-target="consent-banner-accept"]');
+	    if (consent) {
+	        await consent.click();
+	        await new Promise(resolve => setTimeout(resolve, 2000));
+	        await page.reload({ waitUntil: 'networkidle0' });
+	    }
+	
+	    // 3) Ждём контейнер с инвентарём
+	    await page.waitForSelector('div.inventory-max-width', { timeout: 15000 });
+	
+	    // 4) Ищем ссылку на эту кампанию по slug внутри inventory-max-width
+	    const campaignLink = await page.$(
+	        `div.inventory-max-width a.tw-link[href*="/directory/category/${slug}"]`
+	    );
+	
+	    if (!campaignLink) {
+	        // кампании нет в инвентаре — дроп НЕ получен на 100%
+	        await page.close();
+	        return true;
+	    }
+	
+	    // 5) Поднимаемся до корневого блока кампании (data-a-target="drop-campaign-card")
+	    const campaignCard = await campaignLink.evaluateHandle(el =>
+	        el.closest('div[data-a-target="drop-campaign-card"]')
+	    );
+	
+	    if (!campaignCard) {
+	        // на всякий случай — если вдруг структура поменялась
+	        await page.close();
+	        return true;
+	    }
+	
+	    // 6) Проверяем, есть ли hint «нет каналов» — если нет, значит дроп уже отключён
+	    const noChannelsHint = await (campaignCard as any).$(
+	        'div[data-test-selector="DropsCampaignInProgressDescription-no-channels-hint-text"]'
+	    );
+	    if (!noChannelsHint) {
+	        await page.close();
+	        return false;
+	    }
+	
+	    // 7) Собираем все прогресс-бары внутри этой карточки
+	    const bars = await (campaignCard as ElementHandle<HTMLAnchorElement>).$$('div.tw-progress-bar[role="progressbar"]');
+	    for (const bar of bars) {
+	        const now = await bar.evaluate(el => parseInt(el.getAttribute('aria-valuenow')!, 10));
+	        const max = await bar.evaluate(el => parseInt(el.getAttribute('aria-valuemax')!, 10));
+	        if (now < max) {
+	            // есть незавершённый прогресс
+	            await page.close();
+	            return true;
+	        }
+	    }
+	
+	    // всё заполнено — дроп уже получен
+	    await page.close();
+	    return false;
 	}
+
 
 }
