@@ -35,6 +35,7 @@ function hasCampaignStarted(dateRange: string): boolean {
     // 5. Собираем дату старта в локальной временной зоне
     const startDate = new Date(year, month, day, hour, minute);
 
+	console.log(startDate.getTime(), now.getTime())
     // 6. Сравниваем
     return now.getTime() >= startDate.getTime();
 }
