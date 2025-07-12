@@ -107,14 +107,14 @@ export class TwitchService implements ITwitchService {
 
 	    console.log('[DEBUG] Собираем все карточки кампаний без прокрутки...');
 	    // каждая .accordion-header это кампания
-  		const campaigns: { name: string; dateText: string }[] = await page.$$eval(
+  		const campaigns: { name: string; dateText: string; element: Element | undefined}[] = await page.$$eval(
   		  	'.accordion-header',
   		  	headers => headers.map(header => {
   		  	  	// 1) имя кампании
   		  	  	const nameDiv = Array.from(
   		  	  	  	header.querySelectorAll('div.Layout-sc-1xcs6mc-0')
   		  	  	).find(d => d.classList.contains('hJWyGb'));
-				console.log(nameDiv)
+				const element = nameDiv;
   		  	  	const name = nameDiv
   		  	  	  	?.querySelector('img.tw-image.alt')
   		  	  	  	?.textContent?.trim() ?? '';
@@ -123,7 +123,7 @@ export class TwitchService implements ITwitchService {
   		  	  	const dateDiv = header.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
   		  	  	const dateText = dateDiv?.textContent?.trim() ?? '';
 			  
-  		  	  	return { name, dateText };
+  		  	  	return { name, dateText, element };
   		  	})
   		);
 
