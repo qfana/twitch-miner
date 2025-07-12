@@ -63,7 +63,7 @@ export class TwitchService implements ITwitchService {
 	        console.log('[DEBUG] Нашли баннер на /drops/campaigns — жмём Accept и перезагружаем');
 	        await acceptBtn.click();
 	        // даём время баннеру исчезнуть + запросам уйти
-	        await page.waitForTimeout(1500);
+			await new Promise(resolve => setTimeout(resolve, 3000)); // дать время странице обновиться
 	        await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
 			}
 
