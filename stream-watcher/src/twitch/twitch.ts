@@ -123,6 +123,7 @@ export class TwitchService implements ITwitchService {
 	    // Оставляем только те, у которых дата начала >= сегодня
 	    const now = new Date();
 	    const active = campaigns.filter(({ dateText }) => {
+			console.log(dateText)
 	        return hasCampaignStarted(dateText);
 	    });
 
