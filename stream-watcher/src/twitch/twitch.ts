@@ -83,6 +83,8 @@ export class TwitchService implements ITwitchService {
 			await new Promise(resolve => setTimeout(resolve, 500));
 		}
 
+		await page.screenshot({ path: 'campaigns-final.png' });
+
 		await page.close();
 
 		const slugs = Array.from(collectedNames)
