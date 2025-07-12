@@ -200,7 +200,7 @@ export class TwitchService implements ITwitchService {
 	    }
 	
 	    // 6) Проверяем, есть ли hint «нет каналов» — если нет, значит дроп уже отключён
-	    const noChannelsHint = await (campaignCard as any).$(
+	    const noChannelsHint = await (campaignCard as ElementHandle<HTMLAnchorElement>).$(
 	        'div[data-test-selector="DropsCampaignInProgressDescription-no-channels-hint-text"]'
 	    );
 	    if (!noChannelsHint) {
