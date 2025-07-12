@@ -30,17 +30,21 @@ export class WatcherService implements IWatcherService {
 		console.log('🛑 WatcherService остановлен');
 	}	
 
-    private async checkAndWatch(): Promise<void> {
+	private async checkAndWatch(): Promise<void> {
 		const activeDropSlugs = await this.twitchService.getActiveDropGameSlugs();
-
-		console.log('[DEBUG] Активные игры с дропсами:', activeDropSlugs);
 
 		for (const game of this.gamePriorityList) {
 			if (!activeDropSlugs.includes(game.slug)) continue;
 
+			const alreadyClaimed = await this.twitchService.isDropClaimed(game.slug);
+			if (alreadyClaimed) {
+				console.log(`[DEBUG] Дроп по ${game.slug} уже получен, пропускаем`);
+				continue;
+			}
+
 			const channel = await this.twitchService.getTwitchDropChannel(game.slug);
 			if (channel) {
-				await this.switchToStream(channel);	
+				await this.switchToStream(channel);
 				return;
 			}
 		}

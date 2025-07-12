@@ -53,46 +53,59 @@ export class TwitchService implements ITwitchService {
 
 		console.log('[DEBUG] Загружаем страницу...');
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
-			waitUntil: 'networkidle2',
+			waitUntil: 'domcontentloaded',
 			timeout: 60000,
 		});
 
-		await new Promise(resolve => setTimeout(resolve, 3000));
 		console.log('[DEBUG] Начинаем прокрутку страницы...');
-
 		await page.evaluate(async () => {
 			for (let i = 0; i < 15; i++) {
 				window.scrollBy(0, window.innerHeight);
 				await new Promise(resolve => setTimeout(resolve, 400));
 			}
 		});
+		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор названий...');
 
-		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор .CampaignCard...');
-
-		const gameNames = await page.$$eval('[data-test-selector="CampaignCard"]', (cards) => {
-			return Array.from(cards).map(card => {
-				const heading = card.querySelector('[data-test-selector="CampaignTitle"]');
-				if (!heading) return null;
-				return heading.textContent?.trim() || null;
-			}).filter(Boolean) as string[];
-		});
-
-		console.log('[DEBUG] Найдено игр:', gameNames);
+		const names = await page.$$eval('button.accordion-header p', (nodes) =>
+			nodes.map(el => el.textContent?.trim()).filter(Boolean)
+		);
 
 		await page.close();
 
-		const slugs = gameNames
-			.map(name =>
-				name
-					.toLowerCase()
-					.replace(/[^a-z0-9]+/g, '-') // заменяем всё, кроме a-z и 0-9 на дефис
-					.replace(/(^-+|-+$)/g, '') // удаляем дефисы с начала и конца
-			)
+		const slugs = names
+			.map(name => name!.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, ''))
 			.filter(Boolean);
 
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
-
 		return [...new Set(slugs)];
+	}
+
+	// Метод для проверки, есть ли незавершённые дропы по игре
+	public async isDropClaimed(slug: string): Promise<boolean> {
+		const context = this.browserService.getContext();
+		const page = await context.newPage();
+
+		await page.goto('https://www.twitch.tv/drops/inventory', {
+			waitUntil: 'domcontentloaded',
+			timeout: 60000,
+		});
+
+		console.log('[DEBUG] Проверяем инвентарь на предмет игры:', slug);
+
+		// Ждём, пока подгрузятся элементы дропа
+		await page.waitForSelector('div[data-a-target="drop-campaign-card"]', { timeout: 15000 });
+
+		const isClaimed = await page.$$eval('div[data-a-target="drop-campaign-card"]', (cards, targetSlug) => {
+			return !cards.some(card => {
+				const gameName = card.querySelector('p')?.textContent?.toLowerCase() || '';
+				const transformed = gameName.replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, '');
+				return transformed === targetSlug;
+			});
+		}, slug);
+
+		await page.close();
+		console.log(`[DEBUG] Для ${slug} получен дроп:`, isClaimed);
+		return isClaimed;
 	}
 
 }
