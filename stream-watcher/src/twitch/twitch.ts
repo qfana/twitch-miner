@@ -59,6 +59,8 @@ export class TwitchService implements ITwitchService {
 		await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36');
 
     	await page.goto('https://www.twitch.tv', { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
 
     	// 2) Если появился consent, нажать:
     	const accept = await page.$('button[data-a-target="consent-banner-accept"]');
