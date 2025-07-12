@@ -70,14 +70,21 @@ export class TwitchService implements ITwitchService {
 		const collectedNames = new Set<string>();
 
 
-		const newNames = await page.$$eval('p.CoreText-sc-1txzju1-0.dzXkjr', (nodes) =>
-			nodes.map(el => el.textContent?.trim()).filter(Boolean)
-		);
 
-		newNames.forEach(name => {
-			if (name) collectedNames.add(name);
-		});
-		
+		for (let i = 0; i < 5; i++) {
+			// Собираем текущие видимые элементы
+			const newNames = await page.$$eval('p.CoreText-sc-1txzju1-0.dzXkjr', (nodes) =>
+				nodes.map(el => el.textContent?.trim()).filter(Boolean)
+			);
+
+			newNames.forEach(name => {
+				if (name) collectedNames.add(name);
+			});
+
+			await page.evaluate(() => window.scrollBy(0, window.innerHeight));
+			await page.waitForTimeout(500);
+		}
+
 		await page.evaluate(() => window.scrollBy(0, window.innerHeight));
 
 
