@@ -59,14 +59,28 @@ export class TwitchService implements ITwitchService {
 	
 		console.log('[DEBUG] Начинаем прокрутку страницы...');
 		await page.evaluate(async () => {
-			for (let i = 0; i < 15; i++) {
+			for (let i = 0; i < 20; i++) {
 				window.scrollBy(0, window.innerHeight);
-				await new Promise(resolve => setTimeout(resolve, 400));
+				await new Promise(resolve => setTimeout(resolve, 300));
 			}
 		});
-		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор названий...');
+		console.log('[DEBUG] Прокрутка завершена.');
 	
-		const names = await page.$$eval('div.accordion-header p', (nodes) =>
+		// Раскрываем все accordion-блоки
+		const headers = await page.$$('.accordion-header');
+		console.log(`[DEBUG] Найдено accordion-блоков: ${headers.length}`);
+		for (const [i, header] of headers.entries()) {
+			try {
+				await header.click();
+				await page.waitForTimeout(100);
+				console.log(`[DEBUG] Кликнули по accordion #${i}`);
+			} catch (err) {
+				console.warn(`[WARN] Не удалось кликнуть по accordion #${i}:`, err);
+			}
+		}
+	
+		console.log('[DEBUG] Начинаем сбор названий...');
+		const names = await page.$$eval('p.CoreText-sc-1txzju1-0.dzXkjr', (nodes) =>
 			nodes.map(el => el.textContent?.trim()).filter(Boolean)
 		);
 	
