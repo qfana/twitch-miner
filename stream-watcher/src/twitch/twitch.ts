@@ -57,42 +57,37 @@ export class TwitchService implements ITwitchService {
 
 		console.log('[DEBUG] Начинаем прокрутку страницы');
 
-		// Прокрутка страницы
 		await page.evaluate(async () => {
 			for (let i = 0; i < 15; i++) {
 				window.scrollBy(0, window.innerHeight);
-				await new Promise(resolve => setTimeout(resolve, 400));
+				await new Promise(resolve => setTimeout(resolve, 300));
 			}
 		});
 
-		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор заголовков...');
+		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор alt-атрибутов...');
 
-		const gameNames = await page.$$eval('button.accordion-header', (nodes) => {
-			return nodes.map(btn => {
-				const paragraphs = btn.querySelectorAll('p');
-				if (paragraphs.length >= 1) {
-					const name = paragraphs[0]?.textContent?.trim();
-					if (name) return name;
-				}
-				return null;
-			}).filter(Boolean) as string[];
+		const gameNames = await page.$$eval('img[alt]', (imgs) => {
+			const names = imgs.map(img => img.getAttribute('alt')?.trim()).filter(Boolean);
+			return Array.from(new Set(names)); // уникальные
 		});
 
-		console.log('gameNames', gameNames)
+		console.log('[DEBUG] Найдено игр:', gameNames);
+
 		await page.close();
 
 		const slugs = gameNames
-			.map(name =>
-				name
-					.toLowerCase()
-					.replace(/[^a-z0-9]+/g, '-') // заменяем всё, кроме a-z и 0-9 на дефис
-					.replace(/(^-+|-+$)/g, '') // удаляем дефисы с начала и конца
+			.filter((n): n is string => typeof n === 'string')
+			.map(name => name
+				.toLowerCase()
+				.replace(/[^a-z0-9]+/g, '-')
+				.replace(/(^-+|-+$)/g, '')
 			)
 			.filter(Boolean);
 
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
 
-		return [...new Set(slugs)];
+		return slugs;
 	}
+
 
 }
