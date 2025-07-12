@@ -25,7 +25,7 @@ export class TwitchService implements ITwitchService {
 				timeout: 15000,
 			});
 		} catch (err) {
-			console.warn(`[TwitchService] Нет активных стримов для игры ${gameName}`);
+			console.warn(`[TwitchService] Нет активных стримов для игры ${gameSlug}`);
 			await page.close();
 			return null;
 		}
