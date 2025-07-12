@@ -36,7 +36,16 @@ export class BrowserService implements IBrowserService {
             path: '/',
             httpOnly: false,
             secure: true,
-        });
+        },
+        	{
+	    	name: 'twilight-user',
+	    	value: '{%22authToken%22:%22691t7kz7s80krwxgsqersuid12n1y2%22%2C%22displayName%22:%22qfanat%22%2C%22id%22:%22511981511%22%2C%22login%22:%22qfanat%22%2C%22roles%22:{%22isStaff%22:false}%2C%22version%22:2}',
+	    	domain: '.twitch.tv',
+	    	path: '/',
+	    	httpOnly: false,
+	    	secure: true
+	    },
+    );
         await page?.close();
     }
 
