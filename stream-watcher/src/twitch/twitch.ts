@@ -24,6 +24,7 @@ function hasCampaignStarted(dateRange: string): boolean {
     const [hourStr, minuteStr] = timeStr.split(':');
 
     const day   = parseInt(dayStr, 10);
+	console.log(monthStr)
     const month = monthsMap[monthStr.toLowerCase()];
     const hour  = parseInt(hourStr, 10);
     const minute= parseInt(minuteStr, 10);
@@ -33,7 +34,6 @@ function hasCampaignStarted(dateRange: string): boolean {
     const year   = now.getFullYear();
 
     // 5. Собираем дату старта в локальной временной зоне
-	console.log(year, month, day, hour, minute)
     const startDate = new Date(year, month, day, hour, minute);
 
     // 6. Сравниваем
