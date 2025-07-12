@@ -49,34 +49,37 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
-
+	
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
 			waitUntil: 'domcontentloaded',
 			timeout: 60000,
 		});
-
+	
 		await page.waitForSelector('div[role="heading"][aria-level="3"] p', { timeout: 15000 });
-
-		// ⚠️ Прокрутка вниз — позволяет подгрузить все карточки
-		await page.evaluate(async () => {
-			const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-			let previousHeight = 0;
-			let attempts = 0;
-				
-			while (attempts < 5) {
+	
+		console.log('[DEBUG] Начинаем прокрутку страницы');
+	
+		// РЕАЛЬНЫЙ СКРОЛЛ ДО КОНЦА СТРАНИЦЫ
+		let previousHeight = await page.evaluate('document.body.scrollHeight');
+		let attempts = 0;
+	
+		while (attempts < 5) {
+			await page.evaluate(() => {
 				window.scrollBy(0, window.innerHeight);
-				await delay(500);
-			
-				const currentHeight = document.body.scrollHeight;
-				if (currentHeight === previousHeight) {
-					attempts++;
-				} else {
-					attempts = 0;
-					previousHeight = currentHeight;
-				}
+			});
+			await new Promise(resolve => setTimeout(resolve, 700));
+			const currentHeight = await page.evaluate('document.body.scrollHeight');
+		
+			if (currentHeight === previousHeight) {
+				attempts++;
+			} else {
+				attempts = 0;
+				previousHeight = currentHeight;
 			}
-		});
-
+		}
+	
+		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор заголовков...');
+	
 		const gameNames = await page.$$eval('div[role="heading"][aria-level="3"]', (headers) =>
 			headers.map(header => {
 				const paragraphs = header.querySelectorAll('p');
@@ -84,9 +87,9 @@ export class TwitchService implements ITwitchService {
 				return gameName;
 			}).filter((name): name is string => !!name && name.length > 0)
 		);
-
+	
 		await page.close();
-
+	
 		const slugs = gameNames
 			.map(name => name
 				.toLowerCase()
@@ -94,7 +97,9 @@ export class TwitchService implements ITwitchService {
 				.replace(/(^-+|-+$)/g, '')
 			)
 			.filter(Boolean);
-
+		
+		console.log('[DEBUG] Активные игры с дропсами:', slugs);
+		
 		return [...new Set(slugs)];
 	}
 
