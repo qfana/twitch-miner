@@ -72,7 +72,7 @@ export class TwitchService implements ITwitchService {
 			});
 		
 			await page.evaluate(() => window.scrollBy(0, window.innerHeight));
-			await page.waitForTimeout(500);
+			await new Promise(resolve => setTimeout(resolve, 500));
 		}
 	
 		await page.close();
