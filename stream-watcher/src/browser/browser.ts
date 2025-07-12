@@ -46,15 +46,6 @@ export class BrowserService implements IBrowserService {
 	        secure: true
 	    });
 
-        // Ждём, пока появится кнопка "Accept" и кликаем по ней
-        try {
-        	await page.waitForSelector('button:has-text("Accept")', { timeout: 5000 });
-        	await page.click('button:has-text("Accept")');
-        	console.log('[DEBUG] Нажали "Accept" на куки-баннере');
-        } catch (err) {
-        	console.log('[DEBUG] Куки-баннер не появился');
-        }
-
         await page?.close();
     }
 

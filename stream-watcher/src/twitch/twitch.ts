@@ -69,7 +69,14 @@ export class TwitchService implements ITwitchService {
 
 		const collectedNames = new Set<string>();
 
-
+		        // Ждём, пока появится кнопка "Accept" и кликаем по ней
+        try {
+        	await page.waitForSelector('button:has-text("Accept")', { timeout: 5000 });
+        	await page.click('button:has-text("Accept")');
+        	console.log('[DEBUG] Нажали "Accept" на куки-баннере');
+        } catch (err) {
+        	console.log('[DEBUG] Куки-баннер не появился');
+        }
 
 		for (let i = 0; i < 5; i++) {
 			// Собираем текущие видимые элементы
