@@ -50,45 +50,50 @@ export class TwitchService implements ITwitchService {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
 
+		console.log('[DEBUG] Открываем страницу кампаний с дропсами...');
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
 			waitUntil: 'domcontentloaded',
 			timeout: 60000,
 		});
 
-		console.log('[DEBUG] Начинаем прокрутку страницы');
-
-		// Прокрутка
+		console.log('[DEBUG] Начинаем прокрутку страницы...');
 		await page.evaluate(async () => {
 			for (let i = 0; i < 15; i++) {
 				window.scrollBy(0, window.innerHeight);
 				await new Promise(resolve => setTimeout(resolve, 400));
 			}
 		});
+		console.log('[DEBUG] Прокрутка завершена.');
 
-		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор заголовков...');
+		// Проверим количество всех accordion-блоков
+		const accordionCount = await page.$$eval('button.accordion-header', nodes => nodes.length);
+		console.log(`[DEBUG] Найдено accordion-блоков: ${accordionCount}`);
 
+		// Извлекаем полную структуру (innerHTML и textContent) каждого
 		const gameNames = await page.$$eval('button.accordion-header', (buttons) => {
-			console.log('[DEBUG] Найдено кнопок:', buttons.length);
-
-			const names: string[] = [];
+			const result: string[] = [];
 
 			buttons.forEach((btn, index) => {
-				const pTags = btn.querySelectorAll('p');
-				console.log(`[DEBUG] [${index}] Кол-во <p>:`, pTags.length);
+				const paragraphs = btn.querySelectorAll('p');
+				const logParts = [`[DEBUG] [${index}] <p> count: ${paragraphs.length}`];
 
-				if (pTags.length === 2) {
-					const name = pTags[0].textContent?.trim();
-					if (name) {
-						console.log(`[DEBUG] [${index}] Найдено имя:`, name);
-						names.push(name);
-					}
+				paragraphs.forEach((p, pIndex) => {
+					logParts.push(`[p${pIndex}] text: "${p.textContent?.trim()}"`);
+				});
+
+				const name = paragraphs.length >= 1 ? paragraphs[0].textContent?.trim() : null;
+				if (name) {
+					result.push(name);
+					logParts.push(`[DEBUG] Добавлено имя: "${name}"`);
 				}
+
+				console.log(logParts.join(' | '));
 			});
 
-			return names;
+			return result;
 		});
 
-		console.log('[DEBUG] Найдено игр:', gameNames);
+		console.log('[DEBUG] Имена игр до обработки:', gameNames);
 
 		await page.close();
 
@@ -96,12 +101,13 @@ export class TwitchService implements ITwitchService {
 			.map(name =>
 				name
 					.toLowerCase()
-					.replace(/[^a-z0-9]+/g, '-') // всё кроме латиницы и цифр в дефис
-					.replace(/(^-+|-+$)/g, '')   // удалить начальные и конечные дефисы
+					.replace(/[^a-z0-9]+/g, '-') // всё кроме a-z и 0–9 на дефис
+					.replace(/(^-+|-+$)/g, '')   // удалить дефисы с начала/конца
 			)
 			.filter(Boolean);
 
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
+
 		return [...new Set(slugs)];
 	}
 
