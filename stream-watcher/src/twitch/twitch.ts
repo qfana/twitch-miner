@@ -57,47 +57,35 @@ export class TwitchService implements ITwitchService {
 			timeout: 60000,
 		});
 	
-		console.log('[DEBUG] Начинаем прокрутку страницы...');
+		console.log('[DEBUG] Начинаем прокрутку и сбор названий по ходу...');
 	
-		await page.evaluate(async () => {
-			const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+		const collectedNames = new Set<string>();
+	
+		for (let i = 0; i < 50; i++) {
+			// Собираем текущие видимые элементы
+			const newNames = await page.$$eval('p.CoreText-sc-1txzju1-0.dzXkjr', (nodes) =>
+				nodes.map(el => el.textContent?.trim()).filter(Boolean)
+			);
 		
-			let lastHeight = 0;
-			let sameHeightCounter = 0;
+			newNames.forEach(name => {
+				if (name) collectedNames.add(name);
+			});
 		
-			for (let i = 0; i < 50; i++) {
-				window.scrollBy(0, window.innerHeight);
-				await delay(500);
-			
-				const currentHeight = document.body.scrollHeight;
-			
-				if (currentHeight === lastHeight) {
-					sameHeightCounter++;
-				} else {
-					sameHeightCounter = 0;
-					lastHeight = currentHeight;
-				}
-			
-				// Если 3 раза подряд не увеличивается scrollHeight — значит страница догрузилась
-				if (sameHeightCounter >= 3) break;
-			}
-		});
-	
-		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор названий...');
-	
-		const names = await page.$$eval('p.CoreText-sc-1txzju1-0.dzXkjr', (nodes) =>
-			nodes.map(el => el.textContent?.trim()).filter(Boolean)
-		);
+			await page.evaluate(() => window.scrollBy(0, window.innerHeight));
+			await page.waitForTimeout(500);
+		}
 	
 		await page.close();
 	
-		const slugs = names
-			.map(name => name!.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, ''))
+		const slugs = Array.from(collectedNames)
+			.map(name => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, ''))
 			.filter(Boolean);
 	
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
-		return [...new Set(slugs)];
+		return slugs;
 	}
+
+
 	// Метод для проверки, есть ли незавершённые дропы по игре
 	public async isDropClaimed(slug: string): Promise<boolean> {
 		const context = this.browserService.getContext();
