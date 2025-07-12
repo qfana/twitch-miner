@@ -49,14 +49,14 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
-	
+
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
 			waitUntil: 'domcontentloaded',
 			timeout: 60000,
 		});
-	
+
 		console.log('[DEBUG] Начинаем прокрутку страницы');
-	
+
 		// Прокрутка страницы
 		await page.evaluate(async () => {
 			for (let i = 0; i < 15; i++) {
@@ -64,9 +64,9 @@ export class TwitchService implements ITwitchService {
 				await new Promise(resolve => setTimeout(resolve, 400));
 			}
 		});
-	
+
 		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор заголовков...');
-	
+
 		const gameNames = await page.$$eval('button.accordion-header', (nodes) => {
 			return nodes.map(btn => {
 				const paragraphs = btn.querySelectorAll('p');
@@ -77,9 +77,10 @@ export class TwitchService implements ITwitchService {
 				return null;
 			}).filter(Boolean) as string[];
 		});
-	
+
+		console.log('gameNames', gameNames)
 		await page.close();
-	
+
 		const slugs = gameNames
 			.map(name =>
 				name
@@ -88,9 +89,9 @@ export class TwitchService implements ITwitchService {
 					.replace(/(^-+|-+$)/g, '') // удаляем дефисы с начала и конца
 			)
 			.filter(Boolean);
-		
+
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
-		
+
 		return [...new Set(slugs)];
 	}
 
