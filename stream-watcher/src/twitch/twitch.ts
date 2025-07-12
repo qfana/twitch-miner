@@ -192,18 +192,16 @@ export class TwitchService implements ITwitchService {
 	    }
 	
 	    // 5) Поднимаемся до корневого блока кампании (data-a-target="drop-campaign-card")
-	    const towerHandle = await page.evaluateHandle(
-		  	(el: HTMLElement) => el.closest('div.tw-tower'),
-		  	campaignLink
-		);
-		const tower = towerHandle.asElement() as ElementHandle<Element> | null;
-    	if (!tower) {
-    	    // structure changed?
-    	    await page.close();
-				console.log(2);
-
-    	    return true;
-    	}
+	    const cardHandle = await page.evaluateHandle(
+   		    (el: HTMLElement) => el.closest('div.Layout-sc-1xcs6mc-0.dMMIGT'),
+   		    campaignLink
+   		);
+   		const campaignCard = cardHandle.asElement();
+   		if (!campaignCard) {
+   		    await page.close();
+   		    console.warn('Не удалось найти контейнер кампании по классу dMMIGT');
+   		    return true; // на всякий случай — разрешаем смотреть
+   		}
 	
 	    // 6) Проверяем, есть ли hint «нет каналов» — если нет, значит дроп уже отключён
 	    const noChannelsHint = await tower.$(
