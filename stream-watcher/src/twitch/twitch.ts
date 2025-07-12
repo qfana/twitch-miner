@@ -21,8 +21,8 @@ export class TwitchService implements ITwitchService {
 
 
 		try {
-			await page.waitForSelector('a[data-a-target="preview-card-title-link"]', {
-				timeout: 15000,
+			await page.waitForSelector('div[data-a-target="preview-card"]', {
+				timeout: 15000
 			});
 		} catch (err) {
 			console.warn(`[TwitchService] Нет активных стримов для игры ${gameSlug}`);
@@ -30,23 +30,28 @@ export class TwitchService implements ITwitchService {
 			return null;
 		}
 
-		const channels = await page.$$eval('a[data-a-target="preview-card-title-link"]', (elements) => {
-			return elements.map((el) => {
-				const parent = el.closest('div[data-a-target="preview-card"]')!;
-				const viewersText = parent.querySelector('[data-a-target="tw-stat-text"]')?.textContent || '';
-
-				let viewers = 0;
-				if (viewersText.includes('тыс.')) {
-					viewers = parseFloat(viewersText.replace(/[^\d.]/g, '')) * 1000;
-				} else {
-					viewers = parseInt(viewersText.replace(/[^\d]/g, ''));
-				}
-
-				return {
-					name: el.getAttribute('href')?.replace('/', '') || '',
-					viewers
-				};
-			});
+		const channels = await page.$$eval('div[data-a-target="preview-card"]', (cards) => {
+			return cards
+				.map(card => {
+					const dropsBadge = card.innerText.includes('DropsВключены') || card.innerText.includes('DropsEnabled');
+					if (!dropsBadge) return null;
+				
+					const link = card.querySelector('a[data-a-target="preview-card-title-link"]');
+					const viewersText = card.querySelector('[data-a-target="tw-stat-text"]')?.textContent || '';
+				
+					let viewers = 0;
+					if (viewersText.includes('тыс.')) {
+						viewers = parseFloat(viewersText.replace(/[^\d.]/g, '')) * 1000;
+					} else {
+						viewers = parseInt(viewersText.replace(/[^\d]/g, ''));
+					}
+				
+					return {
+						name: link?.getAttribute('href')?.replace('/', '') || '',
+						viewers,
+					};
+				})
+				.filter(Boolean); // убрать null
 		});
 
 		await page.close();
