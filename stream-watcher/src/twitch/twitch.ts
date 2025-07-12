@@ -166,19 +166,18 @@ export class TwitchService implements ITwitchService {
 		await page.waitForSelector('div[role="progressbar"]', { timeout: 15000 });
 
 		const test = await page.$$eval('div[role="progressbar"]', (bars, targetSlug) => {
-			bars.forEach(bar => {
+			bars.some(bar => {
 				const parentCard = bar.closest('div[data-a-target="drop-campaign-card"]');
-				console.log('parentCard', parentCard);
 				if (!parentCard) return false;
 				const gameName = parentCard.querySelector('p')?.textContent?.toLowerCase() || '';
-				console.log('gameName', gameName)
 				const transformed = gameName.replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, '');
-				console.log('transformed', transformed)
 				const progress = parseInt(bar.getAttribute('aria-valuenow') || '0', 10);
-				console.log('progress', progress)
-				return transformed === targetSlug && progress < 100;
+			return { parentCard, gameName, transformed, progress }
 			});
+
 		}, slug);
+		console.log(test);
+
 
 		const hasUnfinishedDrop = false;
 
