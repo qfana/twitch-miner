@@ -59,20 +59,22 @@ export class TwitchService implements ITwitchService {
 
 		const gameNames = await page.$$eval('div[role="heading"][aria-level="3"]', (headers) =>
 			headers.map(header => {
-				const p = header.querySelector('p');
-				return p?.textContent?.trim();
+				// Внутри заголовка ищем все <p>
+				const paragraphs = header.querySelectorAll('p');
+				const gameName = paragraphs.length > 1 ? paragraphs[1].textContent?.trim() : null;
+			
+				return gameName;
 			}).filter((name): name is string => !!name && name.length > 0)
 		);
 
 		await page.close();
 
-		const slugs = gameNames
-			.map(name => (name ?? '')
-				.toLowerCase()
+		const slugs = gameNames.map(name =>
+			name.toLowerCase()
 				.replace(/[^a-z0-9]/g, '-')
 				.replace(/(^-+|-+$)/g, '')
-			)
-			.filter(Boolean);
+		);
+
 
 		return [...new Set(slugs)];
 	}
