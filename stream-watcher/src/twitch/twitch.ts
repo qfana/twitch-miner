@@ -190,18 +190,15 @@ export class TwitchService implements ITwitchService {
 	    }
 	
 	    // 5) Поднимаемся до корневого блока кампании (data-a-target="drop-campaign-card")
-	    const jsHandle = await campaignLink.evaluateHandle(el =>
-		  	el.closest('div[data-a-target="drop-campaign-card"]')
-		);
-
-		const campaignCard = jsHandle.asElement() as ElementHandle<Element> | null;
-
-	    if (!campaignCard) {
-	        // на всякий случай — если вдруг структура поменялась
-			console.log(1);
-	        await page.close();
-	        return true;
-	    }
+	    const handle = await campaignLink.evaluateHandle(el =>
+    	    el.closest('.tw-tower')
+    	);
+    	const tower = handle.asElement() as ElementHandle<Element> | null;
+    	if (!tower) {
+    	    // structure changed?
+    	    await page.close();
+    	    return true;
+    	}
 	
 	    // 6) Проверяем, есть ли hint «нет каналов» — если нет, значит дроп уже отключён
 	    const noChannelsHint = await (campaignCard as ElementHandle<Element>).$(
