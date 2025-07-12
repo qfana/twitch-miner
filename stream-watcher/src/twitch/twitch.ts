@@ -30,7 +30,7 @@ export class TwitchService implements ITwitchService {
 			return null;
 		}
 
-		const channels = await page.$$eval('div[data-a-target="preview-card"]', (cards) => {
+		const channels: { name: string; viewers: number }[] = await page.$$eval('div[data-a-target="preview-card"]', (cards) => {
 			return cards
 				.map(card => {
 					const dropsBadge = card.innerText.includes('DropsВключены') || card.innerText.includes('DropsEnabled');
@@ -51,7 +51,7 @@ export class TwitchService implements ITwitchService {
 						viewers,
 					};
 				})
-				.filter(Boolean); // убрать null
+				.filter((x): x is { name: string; viewers: number } => Boolean(x)); // 👈 фильтрация с типизацией
 		});
 
 		await page.close();
@@ -60,8 +60,8 @@ export class TwitchService implements ITwitchService {
 		if (!channels.length) return null;
 
 		console.log(channels)
-		// const minViewers = channels.reduce((prev, curr) => (prev.viewers < curr.viewers ? prev : curr));
-		return 'x';
+		const minViewers = channels.reduce((prev, curr) => (prev.viewers < curr.viewers ? prev : curr));
+		return minViewers.name;
 	}
 
 	async hasActiveDropCampaign(fullGameName: string): Promise<boolean> {
