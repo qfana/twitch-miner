@@ -1,5 +1,7 @@
 import puppeteer, { Browser, BrowserContext, Page } from "puppeteer";
 import { IBrowserService } from "./browser.interface";
+import dotenv from 'dotenv';
+dotenv.config();
 
 export class BrowserService implements IBrowserService {
     private browser!: Browser;
