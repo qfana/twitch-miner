@@ -38,7 +38,6 @@ export class TwitchService implements ITwitchService {
 		});
 	
 		await page.close();
-		await context.close();
 	
 		if (!channels.length) return null;
 	
