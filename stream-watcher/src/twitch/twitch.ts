@@ -49,33 +49,41 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
-
+	
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
 			waitUntil: 'domcontentloaded',
 			timeout: 60000,
 		});
-
+	
 		await page.waitForSelector('div[role="heading"][aria-level="3"] p', { timeout: 15000 });
-
+	
+		// ⚠️ Прокрутка вниз — позволяет подгрузить все карточки
+		await page.evaluate(async () => {
+			for (let i = 0; i < 10; i++) {
+				window.scrollBy(0, window.innerHeight);
+				await new Promise(resolve => setTimeout(resolve, 500));
+			}
+		});
+	
 		const gameNames = await page.$$eval('div[role="heading"][aria-level="3"]', (headers) =>
 			headers.map(header => {
-				// Внутри заголовка ищем все <p>
 				const paragraphs = header.querySelectorAll('p');
 				const gameName = paragraphs.length > 1 ? paragraphs[1].textContent?.trim() : null;
-			
 				return gameName;
 			}).filter((name): name is string => !!name && name.length > 0)
 		);
-
+	
 		await page.close();
-
-		const slugs = gameNames.map(name =>
-			name.toLowerCase()
+	
+		const slugs = gameNames
+			.map(name => name
+				.toLowerCase()
 				.replace(/[^a-z0-9]/g, '-')
 				.replace(/(^-+|-+$)/g, '')
-		);
-
-
+			)
+			.filter(Boolean);
+		
 		return [...new Set(slugs)];
 	}
+
 }
