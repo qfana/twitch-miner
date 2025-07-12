@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { BrowserService } from "../browser/browser";
 import { ITwitchService } from "./twitch.interface";
 
@@ -49,66 +50,61 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
-
-		console.log('[DEBUG] Открываем страницу кампаний с дропсами...');
+	
+		console.log('[DEBUG] Загружаем страницу...');
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
-			waitUntil: 'domcontentloaded',
+			waitUntil: 'networkidle0',
 			timeout: 60000,
 		});
-
+	
+		await page.waitForTimeout(3000);
 		console.log('[DEBUG] Начинаем прокрутку страницы...');
+	
+		// Прокрутка страницы для подгрузки всех карточек
 		await page.evaluate(async () => {
 			for (let i = 0; i < 15; i++) {
 				window.scrollBy(0, window.innerHeight);
-				await new Promise(resolve => setTimeout(resolve, 400));
+				await new Promise(resolve => setTimeout(resolve, 500));
 			}
 		});
+	
 		console.log('[DEBUG] Прокрутка завершена.');
-
-		// Проверим количество всех accordion-блоков
-		const accordionCount = await page.$$eval('button.accordion-header', nodes => nodes.length);
-		console.log(`[DEBUG] Найдено accordion-блоков: ${accordionCount}`);
-
-		// Извлекаем полную структуру (innerHTML и textContent) каждого
-		const gameNames = await page.$$eval('button.accordion-header', (buttons) => {
-			const result: string[] = [];
-
-			buttons.forEach((btn, index) => {
+	
+		// Сохраняем HTML для анализа
+		const html = await page.content();
+		await fs.promises.writeFile('/root/twitch-miner/campaigns.html', html);
+		console.log('[DEBUG] HTML страницы сохранён в campaigns.html, длина:', html.length);
+	
+		// Поиск accordion-блоков
+		const gameNames = await page.$$eval('button.accordion-header', (nodes) => {
+			console.log('[DEBUG] Найдено accordion-блоков:', nodes.length);
+			return nodes.map(btn => {
 				const paragraphs = btn.querySelectorAll('p');
-				const logParts = [`[DEBUG] [${index}] <p> count: ${paragraphs.length}`];
-
-				paragraphs.forEach((p, pIndex) => {
-					logParts.push(`[p${pIndex}] text: "${p.textContent?.trim()}"`);
-				});
-
-				const name = paragraphs.length >= 1 ? paragraphs[0].textContent?.trim() : null;
-				if (name) {
-					result.push(name);
-					logParts.push(`[DEBUG] Добавлено имя: "${name}"`);
+				if (paragraphs.length >= 1) {
+					const name = paragraphs[0]?.textContent?.trim();
+					return name || null;
 				}
-
-				console.log(logParts.join(' | '));
-			});
-
-			return result;
+				return null;
+			}).filter(Boolean) as string[];
 		});
-
+	
 		console.log('[DEBUG] Имена игр до обработки:', gameNames);
-
+	
 		await page.close();
-
+	
 		const slugs = gameNames
 			.map(name =>
 				name
 					.toLowerCase()
-					.replace(/[^a-z0-9]+/g, '-') // всё кроме a-z и 0–9 на дефис
-					.replace(/(^-+|-+$)/g, '')   // удалить дефисы с начала/конца
+					.replace(/[^a-z0-9]+/g, '-') // заменяем всё, кроме a-z и 0-9 на дефис
+					.replace(/(^-+|-+$)/g, '') // удаляем дефисы с начала и конца
 			)
 			.filter(Boolean);
-
+		
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
-
+		
 		return [...new Set(slugs)];
 	}
+
 
 }
