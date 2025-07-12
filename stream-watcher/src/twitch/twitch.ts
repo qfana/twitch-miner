@@ -130,13 +130,14 @@ export class TwitchService implements ITwitchService {
 
 	    // Оставляем только те, у которых дата начала >= сегодня
 	    const active = campaigns.filter(({ dateText }) => {
-			console.log(dateText)
 	        return hasCampaignStarted(dateText);
 	    });
 
 	    console.log('[DEBUG] Активных по дате кампаний:', active.length);
 
 	    await page.close();
+
+		console.log(active)
 
 	    // Преобразуем названия в слаги
 	    const slugs = Array.from(new Set(
