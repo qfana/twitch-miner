@@ -50,46 +50,32 @@ export class TwitchService implements ITwitchService {
 	public async getActiveDropGameSlugs(): Promise<string[]> {
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
-
+	
 		console.log('[DEBUG] Загружаем страницу...');
 		await page.goto('https://www.twitch.tv/drops/campaigns', {
 			waitUntil: 'domcontentloaded',
 			timeout: 60000,
 		});
-
+	
 		console.log('[DEBUG] Начинаем прокрутку страницы...');
 		await page.evaluate(async () => {
-			for (let i = 0; i < 20; i++) {
+			for (let i = 0; i < 15; i++) {
 				window.scrollBy(0, window.innerHeight);
-				await new Promise(resolve => setTimeout(resolve, 300));
+				await new Promise(resolve => setTimeout(resolve, 400));
 			}
 		});
-		console.log('[DEBUG] Прокрутка завершена.');
-
-		// Раскрываем все accordion-блоки
-		const headers = await page.$$('.accordion-header');
-		console.log(`[DEBUG] Найдено accordion-блоков: ${headers.length}`);
-		for (const [i, header] of headers.entries()) {
-			try {
-				await header.click();
-				await new Promise(resolve => setTimeout(resolve, 100));
-				console.log(`[DEBUG] Кликнули по accordion #${i}`);
-			} catch (err) {
-				console.warn(`[WARN] Не удалось кликнуть по accordion #${i}:`, err);
-			}
-		}
-
-		console.log('[DEBUG] Начинаем сбор названий...');
+		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор названий...');
+	
 		const names = await page.$$eval('p.CoreText-sc-1txzju1-0.dzXkjr', (nodes) =>
 			nodes.map(el => el.textContent?.trim()).filter(Boolean)
 		);
-
+	
 		await page.close();
-
+	
 		const slugs = names
 			.map(name => name!.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, ''))
 			.filter(Boolean);
-
+	
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
 		return [...new Set(slugs)];
 	}
