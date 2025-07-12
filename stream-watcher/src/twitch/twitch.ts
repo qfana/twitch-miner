@@ -58,12 +58,31 @@ export class TwitchService implements ITwitchService {
 		});
 	
 		console.log('[DEBUG] Начинаем прокрутку страницы...');
+	
 		await page.evaluate(async () => {
-			for (let i = 0; i < 15; i++) {
+			const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+		
+			let lastHeight = 0;
+			let sameHeightCounter = 0;
+		
+			for (let i = 0; i < 50; i++) {
 				window.scrollBy(0, window.innerHeight);
-				await new Promise(resolve => setTimeout(resolve, 400));
+				await delay(500);
+			
+				const currentHeight = document.body.scrollHeight;
+			
+				if (currentHeight === lastHeight) {
+					sameHeightCounter++;
+				} else {
+					sameHeightCounter = 0;
+					lastHeight = currentHeight;
+				}
+			
+				// Если 3 раза подряд не увеличивается scrollHeight — значит страница догрузилась
+				if (sameHeightCounter >= 3) break;
 			}
 		});
+	
 		console.log('[DEBUG] Прокрутка завершена. Начинаем сбор названий...');
 	
 		const names = await page.$$eval('p.CoreText-sc-1txzju1-0.dzXkjr', (nodes) =>
@@ -79,7 +98,6 @@ export class TwitchService implements ITwitchService {
 		console.log('[DEBUG] Активные игры с дропсами:', slugs);
 		return [...new Set(slugs)];
 	}
-
 	// Метод для проверки, есть ли незавершённые дропы по игре
 	public async isDropClaimed(slug: string): Promise<boolean> {
 		const context = this.browserService.getContext();
