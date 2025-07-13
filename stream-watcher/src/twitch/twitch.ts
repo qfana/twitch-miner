@@ -146,7 +146,7 @@ export class TwitchService implements ITwitchService {
     	    )
     	));
 
-	    	    console.log(`[DEBUG] Всего/${campaigns.length} / ${active.length} / ${slugs.length} `);
+	    console.log(`[DEBUG] В/А/Д: ${campaigns.length} / ${active.length} / ${slugs.length} `);
 	    return slugs;
 	}
 
