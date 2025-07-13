@@ -201,6 +201,7 @@ export class TwitchService implements ITwitchService {
 	  
 	  	// 5) Собираем все прогресс-бары внутри найденной карточки
   		const bars = await campaignCard.$$('div.tw-progress-bar');
+		if (!bars.length) return true // Не нужно смотреть, так-как все награды получены
   		for (const bar of bars) {
   		  	// корректно типизируем el как Element
   		  	const now = Number(await bar.evaluate((el: Element) => el.getAttribute('aria-valuenow')));
