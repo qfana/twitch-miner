@@ -37,9 +37,9 @@ export class WatcherService implements IWatcherService {
 		if (this.currentStream) {
 			const page = this.browserService.getPages()[0];
 
-			const pageUrl = page.url();
+			const pageUrl = page?.url();
 
-			if (!pageUrl.includes(this.currentStream)) {
+			if (!pageUrl || !pageUrl.includes(this.currentStream)) {
 				this.activityService.stop();
 				this.currentStream = null;
 			};
