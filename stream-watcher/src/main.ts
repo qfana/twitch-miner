@@ -16,7 +16,7 @@ dotenv.config();
 	];
 
     const fallbackChannels = [
-        'sist1m',
+        'm0ntesuma',
         'tpnakyxny'
     ]
 
