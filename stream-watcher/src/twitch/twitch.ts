@@ -181,24 +181,28 @@ export class TwitchService implements ITwitchService {
 		);
 
 	  	// 4) Находим карточку, в которой внутри есть ссылка на нужный slug
-	  	const cards = await page.$$('p[data-test-selector="DropsCampaignInProgressDescription-hint-text-parent"]');
-  		let campaignCard = null;
-		console.log(slug, cards)
-  		for (const card of cards) {
-  		  	const link = await card.$(`a[href*="/directory/category/${slug}"]`);
+		const games = await page.$$('div.Layout-sc-1xcs6mc-0 jtROCr');
+		console.log(games)
+		let campaignCard = null;
+		for (const game of games) {
+			const cards = await game.$$('p[data-test-selector="DropsCampaignInProgressDescription-hint-text-parent"]');
 
-  		  	if (link) {
-  		  	  campaignCard = card;
-  		  	  break;
-  		  	}
-  		}
+			for (const card of cards) {
+				  const link = await card.$(`a[href*="/directory/category/${slug}"]`);
+  
+				  if (link) {
+					campaignCard = game;
+					break;
+				  }
+			}
+		}
+
+		if (!campaignCard) {
+			  // либо дроп не начался, либо мы его уже выкупили (его уже нет в «В процессе»)
+			  await page.close();
+			  return false;   // → «надо смотреть» (не получен на 100%)
+		}
 		
-	  	if (!campaignCard) {
-	  	  	// либо дроп не начался, либо мы его уже выкупили (его уже нет в «В процессе»)
-	  	  	await page.close();
-	  	  	return false;   // → «надо смотреть» (не получен на 100%)
-	  	}
-	  
 	  	// 5) Собираем все прогресс-бары внутри найденной карточки
   		const bars = await campaignCard.$$('div.tw-progress-bar');
 		console.log(bars)
