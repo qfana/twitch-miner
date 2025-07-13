@@ -11,7 +11,7 @@ dotenv.config();
 	const prioritizedGames : GamePriority[] = [
 		{ name: 'Rust', slug: 'rust' },
 		{ name: 'Albion Online', slug: 'albion-online' },
-		{ name: 'League of Legends', slug: 'league-of-legends' },
+		{ name: 'Diablo IV', slug: 'diablo-iv' },
 		{ name: 'Escape From Tarkov', slug: 'escape-from-tarkov' },
 		{ name: 'Marver Rivals', slug: 'marvel-rivals' }
 	];
