@@ -183,13 +183,15 @@ export class TwitchService implements ITwitchService {
 	  	//    Мы используем XPath: ищем любой div[drops-campaign-card], внутри которого
 	  	//    есть <a href*="/directory/category/${slug}">
 	  	const cards = await page.$$('div[data-test-selector="DropsCampaignInProgressDescription-hint-text-parent"]');
+		console.log('cards', cards, cards.length)
   		let campaignCard = null;
   		for (const card of cards) {
-  		  const link = await card.$(`a[href*="/directory/category/${slug}"]`);
-  		  if (link) {
-  		    campaignCard = card;
-  		    break;
-  		  }
+  		  	const link = await card.$(`a[href*="/directory/category/${slug}"]`);
+			
+  		  	if (link) {
+  		  	  campaignCard = card;
+  		  	  break;
+  		  	}
   		}
 		
 	  	if (!campaignCard) {
