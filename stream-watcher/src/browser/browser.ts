@@ -66,7 +66,26 @@ export class BrowserService implements IBrowserService {
         this.pages.push(page);
         console.log(`🟣 Stream opened: ${channelName}`);
 
+        await this.acceptContentGate(page);
+
         return page;
+    }
+
+    private async acceptContentGate(page: Page) {
+        // Селектор кнопки «Начать просмотр» в российской локали...
+        const selector = 'button[data-test-selector="content-classification-gate-overlay-start-watching-button"]';
+        try {
+            // Ждём до 5 секунд, вдруг поплыло чуть подольше
+            const btn = await page.waitForSelector(selector, { timeout: 5_000 });
+            if (btn) {
+              console.log('[BrowserService] Content gate detected, clicking accept…');
+              await btn.click();
+              // немного подождём, чтобы заставка скрылась
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        } catch {
+          // кнопки не было за 5сек → её нет, продолжаем
+        }
     }
 
     async destroy() {
