@@ -182,10 +182,15 @@ export class TwitchService implements ITwitchService {
 	  	// 4) Находим карточку, в которой внутри есть ссылка на нужный slug
 	  	//    Мы используем XPath: ищем любой div[drops-campaign-card], внутри которого
 	  	//    есть <a href*="/directory/category/${slug}">
-	  	const [campaignCard] = await page.$x(`
-	  	  	//div[contains(@data-test-selector,'DropsCampaignCard')]  
-	  	  	  	[.//a[contains(@href, '/directory/category/${slug}')]]
-	  	`);
+	  	const cards = await page.$$('div[data-test-selector="DropsCampaignCard"]');
+  		let campaignCard = null;
+  		for (const card of cards) {
+  		  const link = await card.$(`a[href*="/directory/category/${slug}"]`);
+  		  if (link) {
+  		    campaignCard = card;
+  		    break;
+  		  }
+  		}
 		
 	  	if (!campaignCard) {
 	  	  	// либо дроп не начался, либо мы его уже выкупили (его уже нет в «В процессе»)
@@ -193,17 +198,18 @@ export class TwitchService implements ITwitchService {
 	  	  	return true;   // → «надо смотреть» (не получен на 100%)
 	  	}
 	  
-	  	// 5) Внутри этой карточки берём все прогресс-бары
-	  	const bars = await campaignCard.$$('[role="progressbar"]');
-	  	for (const bar of bars) {
-	  	  	const now = Number(await bar.evaluate(el => el.getAttribute('aria-valuenow')));
-	  	  	const max = Number(await bar.evaluate(el => el.getAttribute('aria-valuemax')));
-	  	  	if (now < max) {
-	  	  	  	// нашли ещё не заполненный шаг
-	  	  	  	await page.close();
-	  	  	  	return true; // → «надо смотреть»
-	  	  	}
-	  	}
+	  	// 5) Собираем все прогресс-бары внутри найденной карточки
+  		const bars = await campaignCard.$$('[role="progressbar"]');
+  		for (const bar of bars) {
+  		  	// корректно типизируем el как Element
+  		  	const now = Number(await bar.evaluate((el: Element) => el.getAttribute('aria-valuenow')));
+  		  	const max = Number(await bar.evaluate((el: Element) => el.getAttribute('aria-valuemax')));
+  		  	if (now < max) {
+  		  	  	// Есть незавершённый шаг — дроп ещё можно получить
+  		  	  	await page.close();
+  		  	  	return true;
+  		  	}
+  		}
 	  
 	  	// 6) Если все бары на 100%
 	  	await page.close();
