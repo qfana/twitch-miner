@@ -9,7 +9,7 @@ dotenv.config();
 
 (async () => {
 	const prioritizedGames : GamePriority[] = [
-		{ name: 'PUBG: Battlegrounds', slug: 'pubg-battlegrounds' },
+		// { name: 'PUBG: Battlegrounds', slug: 'pubg-battlegrounds' },
 		{ name: 'Rust', slug: 'rust' },
 		{ name: 'Albion Online', slug: 'albion-online' },
 		{ name: 'Escape From Tarkov', slug: 'escape-from-tarkov' }
