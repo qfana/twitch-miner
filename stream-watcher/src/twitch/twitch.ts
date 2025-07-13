@@ -195,8 +195,7 @@ export class TwitchService implements ITwitchService {
 	  	if (!campaignCard) {
 	  	  	// либо дроп не начался, либо мы его уже выкупили (его уже нет в «В процессе»)
 	  	  	await page.close();
-			console.log('campaignCard', campaignCard)
-	  	  	return true;   // → «надо смотреть» (не получен на 100%)
+	  	  	return false;   // → «надо смотреть» (не получен на 100%)
 	  	}
 	  
 	  	// 5) Собираем все прогресс-бары внутри найденной карточки
