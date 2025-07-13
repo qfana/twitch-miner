@@ -17,8 +17,11 @@ dotenv.config();
 	];
 
     const fallbackChannels = [
-        'sist1m',
-        'tpnakyxny'
+		'mishkagammi',
+		'sinnexxy',
+		'arssisbsd',
+		'a13rt1k',
+		'igoresh1xx',
     ]
 
 	const browserService = new BrowserService();
