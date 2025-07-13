@@ -7,6 +7,7 @@ export class WatcherService implements IWatcherService {
     private readonly CHECK_INTERVAL = 1000 * 60 * 5; // 5 minutes
     private intervalId?: NodeJS.Timeout;
     private currentStream?: string;
+	private currentFarmingSlug: string | null = null;
 
     constructor(
 		private readonly twitchService: ITwitchService,
@@ -20,9 +21,23 @@ export class WatcherService implements IWatcherService {
 		await this.checkAndWatch();
 
 		this.intervalId = setInterval(() => {
-			this.checkAndWatch().catch(err => console.error('[WatcherService] Ошибка при проверке:', err));
+			this._every15min();
 		}, this.CHECK_INTERVAL);
     }
+
+	private async _every15min(): Promise<void> {
+		console.log('[WatcherService] 15 MINUTES CHECKS STARTED');
+		if (this.currentFarmingSlug) { 
+			const channel = await this.twitchService.getTwitchDropChannel(this.currentFarmingSlug);
+
+			if (channel) {
+				await this.switchToStream(channel);
+				return;
+			}
+		}
+
+		this.checkAndWatch().catch(err => console.error('[WatcherService] Ошибка при проверке:', err));
+	}
 
     public async stopWatching(): Promise<void> {
 		if (this.intervalId) clearInterval(this.intervalId);
@@ -44,6 +59,7 @@ export class WatcherService implements IWatcherService {
 
 			const channel = await this.twitchService.getTwitchDropChannel(game.slug);
 			if (channel) {
+				this.currentFarmingSlug = game.slug;           // запомним, что этим slug сейчас занимаемся
 				await this.switchToStream(channel);
 				return;
 			}

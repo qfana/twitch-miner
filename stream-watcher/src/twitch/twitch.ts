@@ -43,6 +43,7 @@ export class TwitchService implements ITwitchService {
 	constructor(private readonly browserService: BrowserService) {}
     
 	public async getTwitchDropChannel(gameSlug: string): Promise<string | null> {
+		console.log(`[TwitchService] Поиск активных стримов для игры ${gameSlug}`);
 		const context = this.browserService.getContext();
 		const page = await context.newPage();
 
@@ -180,10 +181,7 @@ export class TwitchService implements ITwitchService {
 		);
 
 	  	// 4) Находим карточку, в которой внутри есть ссылка на нужный slug
-	  	//    Мы используем XPath: ищем любой div[drops-campaign-card], внутри которого
-	  	//    есть <a href*="/directory/category/${slug}">
 	  	const cards = await page.$$('p[data-test-selector="DropsCampaignInProgressDescription-hint-text-parent"]');
-		console.log('cards', cards, cards.length)
   		let campaignCard = null;
   		for (const card of cards) {
   		  	const link = await card.$(`a[href*="/directory/category/${slug}"]`);
