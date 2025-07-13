@@ -22,6 +22,8 @@ export class ActivityService implements IActivityService {
     private async claimReward(): Promise<void> {
         const page = this.browserService.getPages()[0];
         const btnSelector = 'button[aria-label^="Получить бонус"], button[aria-label^="Claim Bonus"]';
+
+        await page.screenshot({path: 'reward.png'})
         
         // на всякий случай ограничимся областью community-points-summary
         const summary = await page.$('div[data-test-selector="community-points-summary"]');
