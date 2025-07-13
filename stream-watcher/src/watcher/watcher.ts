@@ -7,7 +7,7 @@ import { IWatcherService } from "./wathcer.interface";
 export class WatcherService implements IWatcherService {
     private readonly CHECK_INTERVAL = 1000 * 5; // 5 sec
     private intervalId?: NodeJS.Timeout;
-    private currentStream?: string;
+    private currentStream?: string | null;
 	private currentFarmingSlug: string | null = null;
 	private counterTicks?: number;
 
@@ -39,8 +39,10 @@ export class WatcherService implements IWatcherService {
 
 			const pageUrl = page.url();
 
-			console.log(pageUrl.includes(this.currentStream))
-			if (!pageUrl.includes(this.currentStream)) this.activityService.stop();
+			if (!pageUrl.includes(this.currentStream)) {
+				this.activityService.stop();
+				this.currentStream = null;
+			};
 		}
 
 
