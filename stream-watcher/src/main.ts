@@ -1,3 +1,4 @@
+import { ActivityService } from './activity/activity';
 import { BrowserService } from './browser/browser'
 import { TwitchService } from './twitch/twitch';
 import { GamePriority } from './types';
@@ -22,8 +23,10 @@ dotenv.config();
 	const browserService = new BrowserService();
 	await browserService.init();
 
+	
 	const twitchService = new TwitchService(browserService);
-	const watcherService = new WatcherService(twitchService, browserService, prioritizedGames, fallbackChannels);
+	const activityService = new ActivityService(browserService);
+	const watcherService = new WatcherService(twitchService, browserService, activityService, prioritizedGames, fallbackChannels);
 
 	await watcherService.startWatching();
 })();

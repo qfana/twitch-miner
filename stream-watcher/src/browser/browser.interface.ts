@@ -11,4 +11,5 @@ export interface IBrowserService {
 
    	getBrowser(): Browser;
    	getContext(): BrowserContext;
+	getPages(): Page[];
 }

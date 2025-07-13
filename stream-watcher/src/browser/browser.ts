@@ -85,4 +85,8 @@ export class BrowserService implements IBrowserService {
     getBrowser(): Browser {
         return this.browser;
     }
+
+    getPages(): Page[] {
+        return this.pages;
+    }
 }

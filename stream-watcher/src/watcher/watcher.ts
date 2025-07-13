@@ -1,29 +1,55 @@
+import { IActivityService } from "../activity/activite.interface";
 import { IBrowserService } from "../browser/browser.interface";
 import { ITwitchService } from "../twitch/twitch.interface";
 import { GamePriority } from "../types";
 import { IWatcherService } from "./wathcer.interface";
 
 export class WatcherService implements IWatcherService {
-    private readonly CHECK_INTERVAL = 1000 * 60 * 5; // 5 minutes
+    private readonly CHECK_INTERVAL = 1000 * 5; // 5 sec
     private intervalId?: NodeJS.Timeout;
     private currentStream?: string;
 	private currentFarmingSlug: string | null = null;
+	private counterTicks?: number;
 
     constructor(
 		private readonly twitchService: ITwitchService,
 		private readonly browserService: IBrowserService,
+		private readonly activityService: IActivityService,
 		private readonly gamePriorityList: GamePriority[], // список slug'ов
         private readonly fallbackChannels: string[]
 	) {}
 
     public async startWatching(): Promise<void> {
-        console.log('👀 WatcherService запущен');
-		await this.checkAndWatch();
-
 		this.intervalId = setInterval(() => {
-			this._every15min();
+			this._every5sec();
 		}, this.CHECK_INTERVAL);
     }
+
+	private async _every5sec(): Promise<void> {
+		if (!this.counterTicks) this.counterTicks = 0;
+		this.counterTicks++;
+
+		if (this.currentStream) {
+			const page = this.browserService.getPages()[0];
+
+			const pageUrl = page.url();
+			console.log(pageUrl)
+			// this.activityService.start();
+		}
+
+
+		if (this.counterTicks % 3 === 0) this._every15sec();
+		if (this.counterTicks % 6 === 0) this._every30sec();
+		if (this.counterTicks % 60 === 0) this._every15min();
+	}
+
+	private async _every15sec(): Promise<void> {
+		this.activityService.every15sec();
+	}
+
+	private async _every30sec(): Promise<void> {
+		this.activityService.every30sec();
+	}
 
 	private async _every15min(): Promise<void> {
 		console.log('[WatcherService] 15 MINUTES CHECKS STARTED');
@@ -36,7 +62,7 @@ export class WatcherService implements IWatcherService {
 			}
 		}
 
-		this.checkAndWatch().catch(err => console.error('[WatcherService] Ошибка при проверке:', err));
+		await this.checkAndWatch().catch(err => console.error('[WatcherService] Ошибка при проверке:', err));
 	}
 
     public async stopWatching(): Promise<void> {
@@ -81,5 +107,7 @@ export class WatcherService implements IWatcherService {
 		await this.browserService.destroy(); // Закрываем предыдущие стримы
 		await this.browserService.openStream(channel);
 		this.currentStream = channel;
+
+		this.activityService.start();
 	}
 }

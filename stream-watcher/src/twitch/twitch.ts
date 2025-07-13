@@ -102,12 +102,8 @@ export class TwitchService implements ITwitchService {
 	        console.log('[DEBUG] Нажимаем Accept и ждём обновления');
 	        await accept.click();
 	        await new Promise(resolve => setTimeout(resolve, 2000));
-	        await page.reload({ waitUntil: 'networkidle0' });
 	    }
 
-		await page.screenshot({ path: 'screenshot.png' });
-
-	    console.log('[DEBUG] Собираем все карточки кампаний без прокрутки...');
 	    // каждая .accordion-header это кампания
   		const campaigns: { name: string; dateText: string; }[] = await page.$$eval(
   		  	'.accordion-header',
@@ -124,17 +120,12 @@ export class TwitchService implements ITwitchService {
   		  	})
   		);
 
-	    console.log('[DEBUG] Всего кампаний:', campaigns.length);
-
 	    // Оставляем только те, у которых дата начала >= сегодня
 	    const active = campaigns.filter(({ dateText }) => {
 	        return hasCampaignStarted(dateText);
 	    });
 
-	    console.log('[DEBUG] Активных по дате кампаний:', active.length);
-
 	    await page.close();
-
 
 	    // Преобразуем названия в слаги
 	    const slugs = Array.from(new Set(
@@ -146,7 +137,7 @@ export class TwitchService implements ITwitchService {
     	    )
     	));
 
-	    console.log('[DEBUG] Активные игры с дропсами:', slugs.length);
+	    	    console.log(`[DEBUG] Всего/${campaigns.length} / ${active.length} / ${slugs.length} `);
 	    return slugs;
 	}
 
