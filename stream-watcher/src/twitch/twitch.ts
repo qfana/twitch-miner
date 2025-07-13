@@ -156,82 +156,60 @@ export class TwitchService implements ITwitchService {
 	 * false — если дроп уже получен или недоступен.
 	 */
 	public async isDropClaimed(slug: string): Promise<boolean> {
-	    const ctx = this.browserService.getContext();
-	    const page = await ctx.newPage();
-	
-	    // 1) Открываем инвентарь дропсов
-	    await page.goto('https://www.twitch.tv/drops/inventory', {
-	        waitUntil: 'networkidle0',
-	        timeout: 60000,
-	    });
-	
-	    // 2) Закрываем баннер согласия, если он есть
-	    const consent = await page.$('button[data-a-target="consent-banner-accept"]');
-	    if (consent) {
-	        await consent.click();
-	        await new Promise(resolve => setTimeout(resolve, 2000));
-	        await page.reload({ waitUntil: 'networkidle0' });
-	    }
-	
-	    // 3) Ждём контейнер с инвентарём
-	    await page.waitForSelector('div.inventory-max-width', { timeout: 15000 });
-	
-	    // 4) Ищем ссылку на эту кампанию по slug внутри inventory-max-width
-	    const campaignLink = await page.$(
-	        `div.inventory-max-width a.tw-link[href*="/directory/category/${slug}"]`
-	    );
-
-		console.log('campaignLink', campaignLink)
-	
-	    if (!campaignLink) {
-	        // кампании нет в инвентаре — дроп НЕ получен на 100%
-	        await page.close();
-			console.log(3);
-
-	        return true;
-	    }
-	
-	    // 5) Поднимаемся до корневого блока кампании (data-a-target="drop-campaign-card")
-	    const cardHandle = await page.evaluateHandle(
-   		    (el: HTMLElement) => el.closest('div.Layout-sc-1xcs6mc-0.dMMIGT'),
-   		    campaignLink
-   		);
-   		const campaignCard = cardHandle.asElement();
-   		if (!campaignCard) {
-   		    await page.close();
-   		    console.warn('Не удалось найти контейнер кампании по классу dMMIGT');
-   		    return true; // на всякий случай — разрешаем смотреть
-   		}
-	
-	// 6) Проверяем, висит ли hint «нет каналов»
-	    const noChannelsHint = await campaignCard.$(
-	        '[data-test-selector="DropsCampaignInProgressDescription-no-channels-hint-text"]'
-	    );
-	    if (!noChannelsHint) {
-	        // hint отсутствует → дроп отключён
-	        await page.close();
-	        return false;
-	    }
-
-	    // 7) Ищем все прогресс-бары внутри этой карточки
-	    const bars = await campaignCard.$$(
-	        'div.tw-progress-bar[role="progressbar"]'
-	    );
-	    for (const bar of bars) {
-	        const now = parseInt(await bar.evaluate(el => el.getAttribute('aria-valuenow') || '0'), 10);
-	        const max = parseInt(await bar.evaluate(el => el.getAttribute('aria-valuemax') || '0'), 10);
-	        if (now < max) {
-	            // есть незавершённый шаг → дроп ещё можно получить
-	            await page.close();
-				console.log(2);
-	            return true;
-	        }
-	    }
-
-	    // всё на 100% → дроп уже получен
-	    await page.close();
-	    return false;
+	  	const ctx = this.browserService.getContext();
+	  	const page = await ctx.newPage();
+		
+	  	// 1) Заходим в инвентарь
+	  	await page.goto('https://www.twitch.tv/drops/inventory', {
+	  	  	waitUntil: 'networkidle2',
+	  	  	timeout: 60000,
+	  	});
+	  
+	  	// 2) Закрываем баннер согласия, если он вылез
+	  	const consent = await page.$('button[data-a-target="consent-banner-accept"]');
+	  	if (consent) {
+	  	  	await consent.click();
+	  	  	await new Promise(resolve => setTimeout(resolve, 2000));
+	  	  	await page.reload({ waitUntil: 'networkidle2' });
+	  	}
+	  
+	  	// 3) Ждём пока подгрузится список «В процессе»
+	  	//    Тут вместо «inventory-max-width» ловим общий контейнер кампаний
+	  	await page.waitForSelector('div[drops-inventory-page] div[drops-campaign-card]', {
+	  	  	timeout: 15_000
+	  	});
+	  
+	  	// 4) Находим карточку, в которой внутри есть ссылка на нужный slug
+	  	//    Мы используем XPath: ищем любой div[drops-campaign-card], внутри которого
+	  	//    есть <a href*="/directory/category/${slug}">
+	  	const [campaignCard] = await page.$x(`
+	  	  	//div[contains(@data-test-selector,'DropsCampaignCard')]  
+	  	  	  	[.//a[contains(@href, '/directory/category/${slug}')]]
+	  	`);
+		
+	  	if (!campaignCard) {
+	  	  	// либо дроп не начался, либо мы его уже выкупили (его уже нет в «В процессе»)
+	  	  	await page.close();
+	  	  	return true;   // → «надо смотреть» (не получен на 100%)
+	  	}
+	  
+	  	// 5) Внутри этой карточки берём все прогресс-бары
+	  	const bars = await campaignCard.$$('[role="progressbar"]');
+	  	for (const bar of bars) {
+	  	  	const now = Number(await bar.evaluate(el => el.getAttribute('aria-valuenow')));
+	  	  	const max = Number(await bar.evaluate(el => el.getAttribute('aria-valuemax')));
+	  	  	if (now < max) {
+	  	  	  	// нашли ещё не заполненный шаг
+	  	  	  	await page.close();
+	  	  	  	return true; // → «надо смотреть»
+	  	  	}
+	  	}
+	  
+	  	// 6) Если все бары на 100%
+	  	await page.close();
+	  	return false;  // → «не смотреть»
 	}
+
 
 
 }
