@@ -2,6 +2,15 @@ import fs from 'fs';
 import { BrowserService } from "../browser/browser";
 import { ITwitchService } from "./twitch.interface";
 import { ElementHandle, BrowserContext } from 'puppeteer';
+import fetch from 'node-fetch';
+
+async function isLiveByPreview(login: string): Promise<boolean> {
+  const url = `https://static-cdn.jtvnw.net/previews-ttv/live_user_${login}-80x45.jpg`;
+  const res = await fetch(url, { method: 'HEAD' });
+  const len = Number(res.headers.get('content-length') || 0);
+  return len > 1000; // если превью >1 КБ — вероятно, стрим идёт
+}
+
 
 function hasCampaignStarted(dateRange: string): boolean {
     // русские месяцы в формате "янв.", "фев.", ... без точки / с точкой
@@ -209,6 +218,12 @@ export class TwitchService implements ITwitchService {
 	  	return false;  // → «не смотреть»
 	}
 
+	public async getFirstOnlineChannel(login: string): Promise<boolean> {
+	    const url = `https://static-cdn.jtvnw.net/previews-ttv/live_user_${login}-80x45.jpg`;
+  		const res = await fetch(url, { method: 'HEAD' });
+  		const len = Number(res.headers.get('content-length') || 0);
+  		return len > 1000;
+  	}
 
 
 }

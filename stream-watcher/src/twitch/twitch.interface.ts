@@ -3,4 +3,6 @@ export interface ITwitchService {
     getActiveDropGameSlugs(): Promise<string[]>;
     isDropClaimed(slug: string): Promise<boolean>;
 
+    getFirstOnlineChannel(login: string): Promise<boolean>;
+
 }

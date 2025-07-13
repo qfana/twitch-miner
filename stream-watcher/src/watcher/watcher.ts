@@ -101,8 +101,11 @@ export class WatcherService implements IWatcherService {
 
 		console.log('⚠️ Нет активных дропов — переключаемся на fallback стримы');
 		for (const fallback of this.fallbackChannels) {
-			await this.switchToStream(fallback);
-			return;
+			const lived = await this.twitchService.getFirstOnlineChannel(fallback);
+			if (lived) {
+				await this.switchToStream(fallback);
+				return;
+			}
 		}
 
 		console.log('⛔ Нет доступных стримов вообще');

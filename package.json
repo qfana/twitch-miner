@@ -13,6 +13,7 @@
     "dotenv": "^17.2.0",
     "injection-js": "^2.5.0",
     "inversify": "^7.5.4",
+    "node-fetch": "^3.3.2",
     "puppeteer": "^24.12.1",
     "reflect-metadata": "^0.2.2"
   },
