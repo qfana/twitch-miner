@@ -182,12 +182,12 @@ export class TwitchService implements ITwitchService {
 	  	// 4) Находим карточку, в которой внутри есть ссылка на нужный slug
 	  	//    Мы используем XPath: ищем любой div[drops-campaign-card], внутри которого
 	  	//    есть <a href*="/directory/category/${slug}">
-	  	const cards = await page.$$('div[data-test-selector="DropsCampaignInProgressDescription-hint-text-parent"]');
+	  	const cards = await page.$$('p[data-test-selector="DropsCampaignInProgressDescription-hint-text-parent"]');
 		console.log('cards', cards, cards.length)
   		let campaignCard = null;
   		for (const card of cards) {
   		  	const link = await card.$(`a[href*="/directory/category/${slug}"]`);
-			
+
   		  	if (link) {
   		  	  campaignCard = card;
   		  	  break;
