@@ -183,6 +183,7 @@ export class TwitchService implements ITwitchService {
 	  	// 4) Находим карточку, в которой внутри есть ссылка на нужный slug
 	  	const cards = await page.$$('p[data-test-selector="DropsCampaignInProgressDescription-hint-text-parent"]');
   		let campaignCard = null;
+		console.log(slug, cards)
   		for (const card of cards) {
   		  	const link = await card.$(`a[href*="/directory/category/${slug}"]`);
 
@@ -200,6 +201,7 @@ export class TwitchService implements ITwitchService {
 	  
 	  	// 5) Собираем все прогресс-бары внутри найденной карточки
   		const bars = await campaignCard.$$('div.tw-progress-bar');
+		console.log(bars)
 		if (!bars.length) return true // Не нужно смотреть, так-как все награды получены
   		for (const bar of bars) {
   		  	// корректно типизируем el как Element
@@ -209,7 +211,7 @@ export class TwitchService implements ITwitchService {
   		  	  	// Есть незавершённый шаг — дроп ещё можно получить
   		  	  	await page.close();
 				console.log('now < max', now, max)
-  		  	  	return true;
+  		  	  	return false;
   		  	}
   		}
 	  
