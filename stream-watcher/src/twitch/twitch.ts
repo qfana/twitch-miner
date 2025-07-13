@@ -175,14 +175,14 @@ export class TwitchService implements ITwitchService {
 	  
 	  	// 3) Ждём пока подгрузится список «В процессе»
 	  	//    Тут вместо «inventory-max-width» ловим общий контейнер кампаний
-	  	await page.waitForSelector('div[drops-inventory-page] div[drops-campaign-card]', {
+	  	await page.waitForSelector('div[inventory-max-width] div[Layout-sc-1xcs6mc-0 jtROCr]', {
 	  	  	timeout: 15_000
 	  	});
 	  
 	  	// 4) Находим карточку, в которой внутри есть ссылка на нужный slug
 	  	//    Мы используем XPath: ищем любой div[drops-campaign-card], внутри которого
 	  	//    есть <a href*="/directory/category/${slug}">
-	  	const cards = await page.$$('div[data-test-selector="DropsCampaignCard"]');
+	  	const cards = await page.$$('div[data-test-selector="DropsCampaignInProgressDescription-hint-text-parent"]');
   		let campaignCard = null;
   		for (const card of cards) {
   		  const link = await card.$(`a[href*="/directory/category/${slug}"]`);
@@ -199,7 +199,7 @@ export class TwitchService implements ITwitchService {
 	  	}
 	  
 	  	// 5) Собираем все прогресс-бары внутри найденной карточки
-  		const bars = await campaignCard.$$('[role="progressbar"]');
+  		const bars = await campaignCard.$$('div.tw-progress-bar');
   		for (const bar of bars) {
   		  	// корректно типизируем el как Element
   		  	const now = Number(await bar.evaluate((el: Element) => el.getAttribute('aria-valuenow')));
