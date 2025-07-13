@@ -12,6 +12,7 @@ dotenv.config();
 		{ name: 'PUBG: Battlegrounds', slug: 'pubg-battlegrounds' },
 		{ name: 'Rust', slug: 'rust' },
 		{ name: 'Albion Online', slug: 'albion-online' },
+		{ name: 'League of Legends', slug: 'league-of-legends' },
 		{ name: 'Escape From Tarkov', slug: 'escape-from-tarkov' },
 		{ name: 'Marver Rivals', slug: 'marvel-rivals' }
 	];
