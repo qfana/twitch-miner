@@ -174,11 +174,11 @@ export class TwitchService implements ITwitchService {
 	  	}
 	  
 	  	// 3) Ждём пока подгрузится список «В процессе»
-	  	//    Тут вместо «inventory-max-width» ловим общий контейнер кампаний
-	  	await page.waitForSelector('div[inventory-max-width] div[Layout-sc-1xcs6mc-0 jtROCr]', {
-	  	  	timeout: 15_000
-	  	});
-	  
+		await page.waitForSelector(
+		  	'div.inventory-page div.inventory-max-width',
+		  	{ timeout: 15_000 }
+		);
+
 	  	// 4) Находим карточку, в которой внутри есть ссылка на нужный slug
 	  	//    Мы используем XPath: ищем любой div[drops-campaign-card], внутри которого
 	  	//    есть <a href*="/directory/category/${slug}">
