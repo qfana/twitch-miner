@@ -26,12 +26,13 @@ export class WatcherService implements IWatcherService {
     }
 
 	private async _every5sec(): Promise<void> {
-		if (!this.counterTicks) {
+		if (!this.counterTicks && this.counterTicks !== 0) {
 			this.counterTicks = 0
 			await this.checkAndWatch().catch(err => console.error('[WatcherService] Ошибка при проверке:', err));
-		};
+		} else {
+			this.counterTicks++;
+		}
 
-		this.counterTicks++;
 
 		if (this.currentStream) {
 			const page = this.browserService.getPages()[0];
