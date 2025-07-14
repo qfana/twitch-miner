@@ -171,7 +171,6 @@ export class TwitchService implements ITwitchService {
 	  	if (consent) {
 	  	  	await consent.click();
 	  	  	await new Promise(resolve => setTimeout(resolve, 2000));
-	  	  	await page.reload({ waitUntil: 'networkidle2' });
 	  	}
 	  
 	  	// 3) Ждём пока подгрузится список «В процессе»
@@ -182,11 +181,9 @@ export class TwitchService implements ITwitchService {
 
 	  	// 4) Находим карточку, в которой внутри есть ссылка на нужный slug
 		const games = await page.$$('div.Layout-sc-1xcs6mc-0.jtROCr');
-		console.log(games)
 		let campaignCard = null;
 		for (const game of games) {
 			const cards = await game.$$('p[data-test-selector="DropsCampaignInProgressDescription-hint-text-parent"]');
-			console.log('cards', cards)
 			if (!cards.length) continue;
 
 			for (const card of cards) {
@@ -199,8 +196,6 @@ export class TwitchService implements ITwitchService {
 			}
 		}
 
-		console.log('campaignCard', campaignCard)
-
 		if (!campaignCard) {
 			  // либо дроп не начался, либо мы его уже выкупили (его уже нет в «В процессе»)
 			  await page.close();
@@ -209,8 +204,10 @@ export class TwitchService implements ITwitchService {
 		
 	  	// 5) Собираем все прогресс-бары внутри найденной карточки
   		const hasUnfinished = await campaignCard.$('div.Layout-sc-1xcs6mc-0.Oagqd') !== null;
-		console.log(hasUnfinished)
-		if (!hasUnfinished) return true;
+		if (!hasUnfinished) {
+			await page.close();
+			return true
+		};
 	  
 	  	// 6) Если все бары на 100%
 	  	await page.close();

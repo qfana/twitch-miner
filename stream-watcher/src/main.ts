@@ -17,6 +17,7 @@ dotenv.config();
 	];
 
     const fallbackChannels = [
+		'godrage77',
 		'mishkagammi',
 		'sinnexxy',
 		'arssisbsd',
