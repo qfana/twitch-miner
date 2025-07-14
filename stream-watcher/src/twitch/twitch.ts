@@ -208,20 +208,9 @@ export class TwitchService implements ITwitchService {
 		}
 		
 	  	// 5) Собираем все прогресс-бары внутри найденной карточки
-  		const bars = await campaignCard.$$('div.tw-progress-bar');
-		console.log(bars)
-		if (!bars.length) return true // Не нужно смотреть, так-как все награды получены
-  		for (const bar of bars) {
-  		  	// корректно типизируем el как Element
-  		  	const now = Number(await bar.evaluate((el: Element) => el.getAttribute('aria-valuenow')));
-  		  	const max = Number(await bar.evaluate((el: Element) => el.getAttribute('aria-valuemax')));
-  		  	if (now < max) {
-  		  	  	// Есть незавершённый шаг — дроп ещё можно получить
-  		  	  	await page.close();
-				console.log('now < max', now, max)
-  		  	  	return false;
-  		  	}
-  		}
+  		const hasUnfinished = await campaignCard.$('div.Layout-sc-1xcs6mc-0.Oagqd') !== null;
+		console.log(hasUnfinished)
+		if (!hasUnfinished) return true;
 	  
 	  	// 6) Если все бары на 100%
 	  	await page.close();
