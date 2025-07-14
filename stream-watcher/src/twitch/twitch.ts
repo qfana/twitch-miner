@@ -186,6 +186,7 @@ export class TwitchService implements ITwitchService {
 		let campaignCard = null;
 		for (const game of games) {
 			const cards = await game.$$('p[data-test-selector="DropsCampaignInProgressDescription-hint-text-parent"]');
+			if (!cards.length) continue;
 
 			for (const card of cards) {
 				  const link = await card.$(`a[href*="/directory/category/${slug}"]`);
