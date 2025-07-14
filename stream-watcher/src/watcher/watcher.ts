@@ -15,7 +15,7 @@ export class WatcherService implements IWatcherService {
 		private readonly twitchService: ITwitchService,
 		private readonly browserService: IBrowserService,
 		private readonly activityService: IActivityService,
-		private readonly gamePriorityList: GamePriority[], // список slug'ов
+		private readonly gamePriorityList: GamePriority[],
         private readonly fallbackChannels: string[]
 	) {}
 

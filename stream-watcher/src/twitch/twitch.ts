@@ -181,7 +181,7 @@ export class TwitchService implements ITwitchService {
 		);
 
 	  	// 4) Находим карточку, в которой внутри есть ссылка на нужный slug
-		const games = await page.$$('div.Layout-sc-1xcs6mc-0 jtROCr');
+		const games = await page.$$('div.Layout-sc-1xcs6mc-0.jtROCr');
 		console.log(games)
 		let campaignCard = null;
 		for (const game of games) {
