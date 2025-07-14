@@ -186,7 +186,7 @@ export class TwitchService implements ITwitchService {
 		let campaignCard = null;
 		for (const game of games) {
 			const cards = await game.$$('p[data-test-selector="DropsCampaignInProgressDescription-hint-text-parent"]');
-			console.log(cards)
+			console.log('cards', cards)
 			if (!cards.length) continue;
 
 			for (const card of cards) {
@@ -198,6 +198,8 @@ export class TwitchService implements ITwitchService {
 				  }
 			}
 		}
+
+		console.log('campaignCard', campaignCard)
 
 		if (!campaignCard) {
 			  // либо дроп не начался, либо мы его уже выкупили (его уже нет в «В процессе»)
