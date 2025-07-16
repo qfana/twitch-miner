@@ -33,7 +33,6 @@ export class WatcherService implements IWatcherService {
 			this.counterTicks++;
 		}
 
-
 		if (this.currentStream) {
 			const page = this.browserService.getPages()[0];
 
@@ -45,10 +44,15 @@ export class WatcherService implements IWatcherService {
 			};
 		}
 
-
 		if (this.counterTicks % 3 === 0) this._every15sec();
 		if (this.counterTicks % 6 === 0) this._every30sec();
-		if (this.counterTicks % 80 === 0) this._every20min();
+		if (this.counterTicks % 80 === 0) {
+			const pages = this.browserService.getPages();
+			for (let i = 0; i < pages.length; i++) {
+				pages[i].screenshot({path: `screenshot${i}_${this.counterTicks}.png`});
+			};
+			this._every20min()
+		};
 	}
 
 	private async _every15sec(): Promise<void> {
@@ -60,7 +64,7 @@ export class WatcherService implements IWatcherService {
 	}
 
 	private async _every20min(): Promise<void> {
-		console.log('[WatcherService] 15 MINUTES CHECKS STARTED');
+		console.log('[WatcherService] 20 MINUTES CHECKS STARTED');
 		if (this.currentFarmingSlug) { 
 			const channel = await this.twitchService.getTwitchDropChannel(this.currentFarmingSlug);
 
