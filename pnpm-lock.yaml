@@ -26,6 +26,9 @@ importers:
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
+      twitch_miner:
+        specifier: 'link:'
+        version: 'link:'
     devDependencies:
       '@types/dotenv':
         specifier: ^8.2.3

@@ -15,7 +15,8 @@
     "inversify": "^7.5.4",
     "node-fetch": "^3.3.2",
     "puppeteer": "^24.12.1",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "twitch_miner": "link:"
   },
   "devDependencies": {
     "@types/dotenv": "^8.2.3",

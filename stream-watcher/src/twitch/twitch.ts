@@ -61,11 +61,15 @@ export class TwitchService implements ITwitchService {
 			timeout: 60000
 		});
 
+		console.log(1);
+
 		const acceptBtn = await page.$('button[data-a-target="consent-banner-accept"]');
 		if (acceptBtn) {
 			await acceptBtn.click();
 			await new Promise(resolve => setTimeout(resolve, 1000)); // дать время странице обновиться
 		}
+
+		console.log(2);
 
 		try {
 			await page.waitForSelector('a.preview-card-channel-link', {
@@ -77,6 +81,8 @@ export class TwitchService implements ITwitchService {
 			return null;
 		}
 
+		console.log(3);
+
 		const channels: ({ name: string; viewers: number } | null)[] = await page.$$eval('a.preview-card-channel-link', (links) => {
 			return links.map(link => {
 				const href = link.getAttribute('href');
@@ -87,6 +93,8 @@ export class TwitchService implements ITwitchService {
 	
 		await page.close();
 	
+		console.log(5);
+
 		if (!channels.length) return null;
 	
 		// Можно сделать случайный выбор или вернуть первый:
