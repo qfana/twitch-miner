@@ -116,47 +116,57 @@ export class TwitchService implements ITwitchService {
 	    // 2) Берём всех прямых детей контейнера, который держит и шапку, и все кампании
 		let find = false;
 		const campaignsAboveMarker = await page.$$('div.drops-root__content > *');
-		console.log(campaignsAboveMarker);
+		
+		const items: { name: string; dateText: string }[] = [];
+		for (const campaign of campaignsAboveMarker) {
+
+			// Если наткнулись на “границу” (тот самый div.ipnSdT), прекращаем сбор
+			const failed = await campaign.$('ipnSdT');
+			if (failed) {
+				if (find) break;
+				find = true;
+			}
+
+			// Иначе, если это заголовок кампании…
+			const campagians = await campaign.$$eval('.accordion-header', headers =>
+   				headers.map(header => {
+   				  	const img = header.querySelector<HTMLImageElement>('img.tw-image');
+   				  	const name = img?.alt.trim() ?? '';
+
+   				  	const dateDiv = header.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
+   				  	const dateText = dateDiv?.textContent?.trim() ?? '';
+
+   					return { name, dateText };
+   					})
+				);
+
+				if (campagians.length) {
+				items.push(...campagians);
+			}
+		}
+
+		console.log(items)
 
 
-		// (item) => {
-		// 	const items: { name: string; dateText: string }[] = [];
-		// 	for (const campaign of item) {
-		// 		// Если наткнулись на “границу” (тот самый div.ipnSdT), прекращаем сбор
-		// 		if (campaign.classList.contains('ipnSdT')) {
-		// 			if (find) break;
-		// 			find = true;
-		// 		}
-		// 		// Иначе, если это заголовок кампании…
-		// 		if (campaign.matches('.accordion-header')) {
-		// 		const img = campaign.querySelector<HTMLImageElement>('img.tw-image');
-		// 		const name = img?.alt.trim() ?? '';
-		// 		const dateDiv = campaign.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
-		// 		const dateText = dateDiv?.textContent?.trim() ?? '';
-		// 		items.push({ name, dateText });
-		// 		}
-		// 	}
-		// 	return items;
-		// }
 		  
 	  
-		// // 3) Фильтруем по дате, генерим слаги
-		// const active = campaignsAboveMarker.filter(({ dateText }) =>
-		//   hasCampaignStarted(dateText)
-		// );
-		// const slugs = Array.from(
-		//   new Set(
-		//     active.map(({ name }) =>
-		//       name
-		//         .toLowerCase()
-		//         .replace(/[^a-z0-9]+/g, '-')
-		//         .replace(/(^-+|-+$)/g, '')
-		//     )
-		//   )
-		// );
+		// 3) Фильтруем по дате, генерим слаги
+		const active = items.filter(({ dateText }) =>
+		  hasCampaignStarted(dateText)
+		);
+		const slugs = Array.from(
+		  new Set(
+		    active.map(({ name }) =>
+		      name
+		        .toLowerCase()
+		        .replace(/[^a-z0-9]+/g, '-')
+		        .replace(/(^-+|-+$)/g, '')
+		    )
+		  )
+		);
 
-	    // console.log(`[DEBUG] В/А/Д: ${campaignsAboveMarker.length} / ${active.length} / ${slugs.length} `);
-	    // return slugs;
+	    console.log(`[DEBUG] В/А/Д: ${items.length} / ${active.length} / ${slugs.length} `);
+	    return slugs;
 	}
 
 
