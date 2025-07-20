@@ -119,6 +119,7 @@ export class TwitchService implements ITwitchService {
 			(nodes) => {
 		    const items: { name: string; dateText: string }[] = [];
 			let find = false;
+			console.log(nodes)
 		    for (const node of nodes) {
         		// Если наткнулись на “границу” (тот самый div.ipnSdT), прекращаем сбор
         		if (node.classList.contains('ipnSdT')) {
