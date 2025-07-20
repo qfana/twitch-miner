@@ -115,7 +115,7 @@ export class TwitchService implements ITwitchService {
 
 	    // 2) Берём всех прямых детей контейнера, который держит и шапку, и все кампании
 		const campaignsAboveMarker = await page.$$eval(
-		  'div.drops-root-content > *',   // здесь drops-root-content — реальный класс вашего контейнера
+		  'div.drops-root__content > *',   // здесь drops-root-content — реальный класс вашего контейнера
 		  (nodes) => {
 		    const items: { name: string; dateText: string }[] = [];
 		    for (const node of nodes) {
