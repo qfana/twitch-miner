@@ -7,7 +7,7 @@ export class BrowserService implements IBrowserService {
     private browser!: Browser;
     private context!: BrowserContext;
     private pages: Page[] = [];
-    private readonly AUTH_TOKEN = process.env.TWITCH_AUTH_TOKEN!;
+    private AUTH_TOKEN = process.env.TWITCH_AUTH_TOKEN!;
     private readonly CHROME_PATH = process.env.TWITCH_CHROME_EXECUTABLE || '/usr/bin/google-chrome';
 
 
@@ -15,12 +15,13 @@ export class BrowserService implements IBrowserService {
      * Инициализация браузера и установка куки (токен авторизации)
      * @returns {Promise<void>}
      */
-    public async init(): Promise<void>  {
+    public async init(token: string): Promise<void>  {
         this.browser = await puppeteer.launch({
             headless: true,
             executablePath: this.CHROME_PATH,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
+        this.AUTH_TOKEN = token;
         this.context = await this.browser.createBrowserContext();
 
         await this.setCookie();

@@ -235,9 +235,36 @@ export class TwitchService implements ITwitchService {
 
 	public async getFirstOnlineChannel(login: string): Promise<boolean> {
 	    const url = `https://static-cdn.jtvnw.net/previews-ttv/live_user_${login}-80x45.jpg`;
-  		const res = await fetch(url, { method: 'HEAD' });
-  		const len = Number(res.headers.get('content-length') || 0);
-  		return len > 1000;
+
+ 	// ставим таймаут, чтобы fetch не висел бесконечно
+ 	const controller = new AbortController();
+ 	const timeout = setTimeout(() => controller.abort(), 5_000); // 5 сек
+
+ 	try {
+ 	  	const res = await fetch(url, {
+ 	  	  	method: 'HEAD',
+ 	  	  	signal: controller.signal,
+ 	  	  	redirect: 'follow', // на всякий случай
+ 	  	});
+
+ 	  	if (!res.ok) {
+ 	  	  	console.warn(`[isLiveByPreview] HTTP ${res.status} for ${login}`);
+ 	  	  	return false;
+ 	  	}
+
+ 	  	const lenHeader = res.headers.get('content-length');
+ 	  	const len = lenHeader ? parseInt(lenHeader, 10) : 0;
+ 	  	return len > 1000;
+ 	} catch (err: any) {
+ 	  	if (err.name === 'AbortError') {
+ 	  	  	console.warn(`[isLiveByPreview] timeout for ${login}`);
+ 	  	} else {
+ 	  	  	console.error(`[isLiveByPreview] error for ${login}:`, err);
+ 	  	}
+ 	  	return false;
+ 	} finally {
+ 	  	clearTimeout(timeout);
+ 	}
   	}
 
 private async dropFullClaimed(slug: string): Promise<boolean> {

@@ -7,30 +7,45 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-(async () => {
-	const prioritizedGames : GamePriority[] = [
-		{ name: 'Rust', slug: 'rust' },
-		{ name: 'Diablo IV', slug: 'diablo-iv' },
-		{ name: 'Escape From Tarkov', slug: 'escape-from-tarkov' },
-		{ name: 'Marver Rivals', slug: 'marvel-rivals' }
-	];
+class ControllerService {
+	private drops: GamePriority[];
+	private streamers: string[];
 
-    const fallbackChannels = [
-		'godrage77',
-		'mishkagammi',
-		'sinnexxy',
-		'arssisbsd',
-		'a13rt1k',
-		'igoresh1xx',
-    ]
+	constructor(auth_token: string | undefined, drops: GamePriority[], streamers: string[]) {
+		this.drops = drops;
+		this.streamers = streamers;
 
-	const browserService = new BrowserService();
-	await browserService.init();
+		this.init(auth_token);
+	}
 
-	
-	const twitchService = new TwitchService(browserService);
-	const activityService = new ActivityService(browserService);
-	const watcherService = new WatcherService(twitchService, browserService, activityService, prioritizedGames, fallbackChannels);
+	private async init(auth_token: string | undefined) {
+		if (!auth_token) return;
+		const browserService = new BrowserService();
+		await browserService.init(auth_token);
 
-	await watcherService.startWatching();
-})();
+		
+		const twitchService = new TwitchService(browserService);
+		const activityService = new ActivityService(browserService);
+		const watcherService = new WatcherService(twitchService, browserService, activityService, this.drops, this.streamers);
+
+		await watcherService.startWatching();
+	}
+}
+
+const prioritizedGames : GamePriority[] = [
+	{ name: 'Rust', slug: 'rust' },
+	{ name: 'Diablo IV', slug: 'diablo-iv' },
+	{ name: 'Escape From Tarkov', slug: 'escape-from-tarkov' },
+	{ name: 'Marver Rivals', slug: 'marvel-rivals' }
+];
+
+const fallbackChannels = [
+	'godrage77',
+	'mishkagammi',
+	'sinnexxy',
+	'arssisbsd',
+	'a13rt1k',
+	'igoresh1xx',
+]
+
+const test = new ControllerService(process.env.AUTH_TOKEN, prioritizedGames, fallbackChannels);

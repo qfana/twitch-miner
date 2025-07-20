@@ -1,7 +1,7 @@
 import { Browser, BrowserContext, Page } from "puppeteer";
 
 export interface IBrowserService {
-  	init(): Promise<void>;
+  	init(token: string): Promise<void>;
   	destroy(): Promise<void>;
 	
   	setCookie(): Promise<void>;
