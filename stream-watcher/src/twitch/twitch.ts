@@ -13,6 +13,7 @@ async function isLiveByPreview(login: string): Promise<boolean> {
 
 
 function hasCampaignStarted(dateRange: string): boolean {
+	console.log(dateRange)
     // русские месяцы в формате "янв.", "фев.", ... без точки / с точкой
     const monthsMap: Record<string, number> = {
         'янв,': 0, 'фев,': 1, 'мар,': 2, 'апр,': 3, 'май,': 4, 'июн,': 5,
@@ -113,59 +114,40 @@ export class TwitchService implements ITwitchService {
 	        await new Promise(resolve => setTimeout(resolve, 2000));
 	    }
 
-	    // 2) Берём всех прямых детей контейнера, который держит и шапку, и все кампании
-		let find = false;
-		const campaignsAboveMarker = await page.$$('div.drops-root__content > *');
-		console.log(campaignsAboveMarker)
-		
-		const items: { name: string; dateText: string }[] = [];
-		for (const campaign of campaignsAboveMarker) {
+	    // каждая .accordion-header это кампания
+  		const campaigns: { name: string; dateText: string; }[] = await page.$$eval(
+  		  	'.accordion-header',
+  		  	headers => headers.map(header => {
+  		  	  	// 1) имя кампании
+  		  	  	const img = header.querySelector<HTMLImageElement>('img.tw-image');
+  		  	  	const name = img?.alt.trim() ?? '';
 
-			// Если наткнулись на “границу” (тот самый div.ipnSdT), прекращаем сбор
-			const failed = await campaign.$('div.ipnSdT');
-			if (failed) {
-				if (find) break;
-				find = true;
-			}
+  		  	  	// 2) текст с диапазоном дат из div.caYeGJ
+  		  	  	const dateDiv = header.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
+  		  	  	const dateText = dateDiv?.textContent?.trim() ?? '';
+			  
+  		  	  	return { name, dateText };
+  		  	})
+  		);
 
-			const campagians = await campaign.$$eval('.accordion-header', headers =>
-   				headers.map(header => {
-   				  	const img = header.querySelector<HTMLImageElement>('img.tw-image');
-   				  	const name = img?.alt.trim() ?? '';
+	    // Оставляем только те, у которых дата начала >= сегодня
+	    const active = campaigns.filter(({ dateText }) => {
+	        return hasCampaignStarted(dateText);
+	    });
 
-   				  	const dateDiv = header.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
-   				  	const dateText = dateDiv?.textContent?.trim() ?? '';
+	    await page.close();
 
-   					return { name, dateText };
-   					})
-				);
+	    // Преобразуем названия в слаги
+	    const slugs = Array.from(new Set(
+    	    active.map(({ name }) =>
+    	        name
+    	            .toLowerCase()
+    	            .replace(/[^a-z0-9]+/g, '-')
+    	            .replace(/(^-+|-+$)/g, '')
+    	    )
+    	));
 
-				if (campagians.length) {
-				items.push(...campagians);
-			}
-		}
-
-		console.log(items)
-
-
-		  
-	  
-		// 3) Фильтруем по дате, генерим слаги
-		const active = items.filter(({ dateText }) =>
-		  hasCampaignStarted(dateText)
-		);
-		const slugs = Array.from(
-		  new Set(
-		    active.map(({ name }) =>
-		      name
-		        .toLowerCase()
-		        .replace(/[^a-z0-9]+/g, '-')
-		        .replace(/(^-+|-+$)/g, '')
-		    )
-		  )
-		);
-
-	    console.log(`[DEBUG] В/А/Д: ${items.length} / ${active.length} / ${slugs.length} `);
+	    console.log(`[DEBUG] В/А/Д: ${campaigns.length} / ${active.length} / ${slugs.length} `);
 	    return slugs;
 	}
 
