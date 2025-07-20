@@ -121,13 +121,12 @@ export class TwitchService implements ITwitchService {
 		for (const campaign of campaignsAboveMarker) {
 
 			// Если наткнулись на “границу” (тот самый div.ipnSdT), прекращаем сбор
-			const failed = await campaign.$('ipnSdT');
+			const failed = await campaign.$('div.ipnSdT');
 			if (failed) {
 				if (find) break;
 				find = true;
 			}
 
-			// Иначе, если это заголовок кампании…
 			const campagians = await campaign.$$eval('.accordion-header', headers =>
    				headers.map(header => {
    				  	const img = header.querySelector<HTMLImageElement>('img.tw-image');
