@@ -123,6 +123,7 @@ export class TwitchService implements ITwitchService {
 	
 		  // 2.2) Все прямые дети (и кампании, и те маркеры ipnSdT)
 		  const children = Array.from(dropsRoot.children);
+		  console.log('children', children);
 	
 		  // 2.3) Найдём **первый** маркер ipnSdT в этом контейнере
 		  const cutoffIdx = children.findIndex(c =>
