@@ -14,8 +14,10 @@
     "injection-js": "^2.5.0",
     "inversify": "^7.5.4",
     "node-fetch": "^3.3.2",
+    "pg": "^8.16.3",
     "puppeteer": "^24.12.1",
     "reflect-metadata": "^0.2.2",
+    "telegraf": "^4.16.3",
     "twitch_miner": "link:"
   },
   "devDependencies": {

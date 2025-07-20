@@ -1,4 +1,4 @@
-export interface GamePriority {
+export interface IGamePriority {
   name: string;
   slug: string;
 }

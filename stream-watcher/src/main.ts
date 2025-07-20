@@ -1,17 +1,17 @@
 import { ActivityService } from './activity/activity';
 import { BrowserService } from './browser/browser'
 import { TwitchService } from './twitch/twitch';
-import { GamePriority } from './types';
+import { IGamePriority } from './types'
 import { WatcherService } from './watcher/watcher';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 class ControllerService {
-	private drops: GamePriority[];
+	private drops: IGamePriority[];
 	private streamers: string[];
 
-	constructor(auth_token: string | undefined, drops: GamePriority[], streamers: string[]) {
+	constructor(auth_token: string | undefined, drops: IGamePriority[], streamers: string[]) {
 		this.drops = drops;
 		this.streamers = streamers;
 
@@ -32,7 +32,7 @@ class ControllerService {
 	}
 }
 
-const prioritizedGames : GamePriority[] = [
+const prioritizedGames : IGamePriority[] = [
 	{ name: 'Rust', slug: 'rust' },
 	{ name: 'Diablo IV', slug: 'diablo-iv' },
 	{ name: 'Escape From Tarkov', slug: 'escape-from-tarkov' },
@@ -49,4 +49,3 @@ const fallbackChannels = [
 ]
 
 const test = new ControllerService(process.env.TWITCH_AUTH_TOKEN, prioritizedGames, fallbackChannels);
-const test2 = new ControllerService(process.env.TWITCH_AUTH_TOKEN, prioritizedGames, fallbackChannels);
