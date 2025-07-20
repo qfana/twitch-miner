@@ -20,8 +20,8 @@ module.exports = {
       args: 'exec ts-node stream-watcher/src/main.ts',
       env: {
         NODE_ENV: 'production',
-        TWITCH_CLIENT_ID: process.env.TWITCH_CLIENT_ID,
-        TWITCH_APP_TOKEN: process.env.TWITCH_APP_TOKEN,
+        TWITCH_CLIENT_ID: process.env.TWITCH_CHROME_EXECUTABLE,
+        TWITCH_APP_TOKEN: process.env.TWITCH_AUTH_TOKEN,
         // ...прочие
       },
     },
