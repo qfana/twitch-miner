@@ -1,7 +1,7 @@
 import { IActivityService } from "../activity/activite.interface";
 import { IBrowserService } from "../browser/browser.interface";
 import { ITwitchService } from "../twitch/twitch.interface";
-import { GamePriority } from "../types";
+import { IGamePriority } from "../types";
 import { IWatcherService } from "./wathcer.interface";
 
 export class WatcherService implements IWatcherService {
@@ -15,7 +15,7 @@ export class WatcherService implements IWatcherService {
 		private readonly twitchService: ITwitchService,
 		private readonly browserService: IBrowserService,
 		private readonly activityService: IActivityService,
-		private readonly gamePriorityList: GamePriority[],
+		private readonly gamePriorityList: IGamePriority[],
         private readonly fallbackChannels: string[]
 	) {}
 
