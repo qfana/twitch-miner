@@ -48,4 +48,4 @@ const fallbackChannels = [
 	'igoresh1xx',
 ]
 
-const test = new ControllerService(process.env.AUTH_TOKEN, prioritizedGames, fallbackChannels);
+const test = new ControllerService(process.env.TWITCH_AUTH_TOKEN, prioritizedGames, fallbackChannels);
