@@ -114,32 +114,30 @@ export class TwitchService implements ITwitchService {
 	    }
 
 	    // 2) Берём всех прямых детей контейнера, который держит и шапку, и все кампании
-		const campaignsAboveMarker = await page.$$eval(
-    		'div.drops-root__content > *',
-			(nodes) => {
-		    const items: { name: string; dateText: string }[] = [];
-			let find = false;
-			console.log(nodes)
-		    for (const node of nodes) {
-        		// Если наткнулись на “границу” (тот самый div.ipnSdT), прекращаем сбор
-        		if (node.classList.contains('ipnSdT')) {
+		let find = false;
+		const campaignsAboveMarker = await page.$$eval('div.drops-root__content > *', (item) => {
+			const items: { name: string; dateText: string }[] = [];
+			for (const campaign of item) {
+				// Если наткнулись на “границу” (тот самый div.ipnSdT), прекращаем сбор
+				if (campaign.classList.contains('ipnSdT')) {
 					if (find) break;
 					find = true;
-        		}
-        		// Иначе, если это заголовок кампании…
-        		if (node.matches('.accordion-header')) {
-          		const img = node.querySelector<HTMLImageElement>('img.tw-image');
-          		const name = img?.alt.trim() ?? '';
+				}
+				// Иначе, если это заголовок кампании…
+				if (campaign.matches('.accordion-header')) {
+				const img = campaign.querySelector<HTMLImageElement>('img.tw-image');
+				const name = img?.alt.trim() ?? '';
+				const dateDiv = campaign.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
+				const dateText = dateDiv?.textContent?.trim() ?? '';
+				items.push({ name, dateText });
+				}
+			}
+			return items;
+		});
 
-          		const dateDiv = node.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
-          		const dateText = dateDiv?.textContent?.trim() ?? '';
+		console.log(campaignsAboveMarker)
 
-          		items.push({ name, dateText });
-        		}
-		    }
-		    return items;
-		  }
-		);
+		  
 	  
 		// 3) Фильтруем по дате, генерим слаги
 		const active = campaignsAboveMarker.filter(({ dateText }) =>
