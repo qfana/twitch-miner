@@ -161,7 +161,7 @@ export class TwitchService implements ITwitchService {
     	    )
     	));
 
-	    console.log(`[DEBUG] В/А/Д: ${campaigns.length} / ${active.length} / ${slugs.length} `);
+	    console.log(`[DEBUG] В/Д: ${campaigns.length} / ${slugs.length} `);
 	    return slugs;
 	}
 
@@ -212,9 +212,13 @@ export class TwitchService implements ITwitchService {
 		}
 
 		if (!campaignCard) {
-			  // либо дроп не начался, либо мы его уже выкупили (его уже нет в «В процессе»)
-			  await page.close();
-			  return false;   // → «надо смотреть» (не получен на 100%)
+			  const claimed = await this.dropFullClaimed(slug);
+			  if (!claimed) {
+				  await page.close();
+				  return false;   // → «надо смотреть» (не получен на 100%)
+			  } else {
+				return true;
+			  }
 		}
 		
 	  	// 5) Собираем все прогресс-бары внутри найденной карточки
@@ -235,6 +239,88 @@ export class TwitchService implements ITwitchService {
   		const len = Number(res.headers.get('content-length') || 0);
   		return len > 1000;
   	}
+
+private async dropFullClaimed(slug: string): Promise<boolean> {
+	  const ctx = this.browserService.getContext();
+
+	  // === 1) Собираем награды из карточки кампании ===
+	  const page = await ctx.newPage();
+	  await page.goto('https://dashboard.twitch.tv/viewer-rewards/drops', {
+	    waitUntil: 'networkidle0',
+	    timeout: 60_000,
+	  });
+	  // закрываем баннер, если есть
+	  const consent = await page.$('button[data-a-target="consent-banner-accept"]');
+	  if (consent) {
+	    await consent.click();
+	    await new Promise(resolve => setTimeout(resolve, 2000));
+	  }
+
+	  // находим ссылку внутри нужной карточки и поднимаемся до header
+	  const linkHandle = await page.$(
+	    `.accordion-header a[href*="/directory/category/${slug}"]`
+	  );
+	  if (!linkHandle) {
+	    await page.close();
+	    return true; // нет карточки — считаем «всё забрано»
+	  }
+	  const headerHandle = (await linkHandle.evaluateHandle(el =>
+	    el.closest('.accordion-header')
+	  )) as ElementHandle<Element>;
+
+	  // раскрываем, если нужно
+	  const isCollapsed = await headerHandle.evaluate(
+	    h => h.getAttribute('aria-expanded') === 'false'
+	  );
+	  if (isCollapsed) {
+	    await headerHandle.click();
+	    await new Promise(resolve => setTimeout(resolve, 50));
+	}
+
+	  // панель наград — следующий элемент после header
+	  const panelHandle = (await headerHandle.evaluateHandle(h =>
+	    h.nextElementSibling
+	  )) as ElementHandle<Element>;
+
+	  // собираем alt всех картинок — это названия наград кампании
+	  const campaignRewards: string[] = await panelHandle.$$eval(
+	    'img[alt]',
+	    imgs => imgs.map(i => i.getAttribute('alt')!.trim())
+	  );
+
+	  await page.close();
+
+	  // === 2) Собираем уже полученные награды из инвентаря ===
+	  const inv = await ctx.newPage();
+	  await inv.goto('https://www.twitch.tv/drops/inventory', {
+	    waitUntil: 'networkidle0',
+	    timeout: 60_000,
+	  });
+	  // закрываем consent
+	  const c2 = await inv.$('button[data-a-target="consent-banner-accept"]');
+	  if (c2) {
+	    await c2.click();
+	    await new Promise(resolve => setTimeout(resolve, 2000));
+		}
+
+	  // Ждём, пока инвентарь прогрузится
+	  await inv.waitForSelector('div.inventory-max-width', { timeout: 15_000 });
+
+	  // В инвентаре уже забранные дропы — alt тех же img
+	  const claimedRewards: string[] = await inv.$$eval(
+	    'div.inventory-max-width img[alt]',
+	    imgs => imgs.map(i => i.getAttribute('alt')!.trim())
+	  );
+
+	  await inv.close();
+
+	  // === 3) Сравниваем: все campaignRewards должны быть в claimedRewards ===
+	  const allClaimed = campaignRewards.every(name =>
+	    claimedRewards.includes(name)
+	  );
+
+	  return allClaimed;
+	}
 
 
 }
