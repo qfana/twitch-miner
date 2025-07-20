@@ -116,6 +116,7 @@ export class TwitchService implements ITwitchService {
 	    // 2) Берём всех прямых детей контейнера, который держит и шапку, и все кампании
 		let find = false;
 		const campaignsAboveMarker = await page.$$('div.drops-root__content > *');
+		console.log(campaignsAboveMarker)
 		
 		const items: { name: string; dateText: string }[] = [];
 		for (const campaign of campaignsAboveMarker) {
