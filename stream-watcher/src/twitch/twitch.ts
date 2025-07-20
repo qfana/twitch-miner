@@ -113,32 +113,42 @@ export class TwitchService implements ITwitchService {
 	        await new Promise(resolve => setTimeout(resolve, 2000));
 	    }
 
-	    // 2) Берём всех прямых детей контейнера, который держит и шапку, и все кампании
-		const campaignsAboveMarker = await page.$$eval(
-		  'div.drops-root__content > *',   // здесь drops-root-content — реальный класс вашего контейнера
-		  (nodes) => {
-		    const items: { name: string; dateText: string }[] = [];
-		    for (const node of nodes) {
-        // Если наткнулись на “границу” (тот самый div.ipnSdT), прекращаем сбор
-        if (node.classList.contains('ipnSdT')) {
-          break;
-        }
-        // Иначе, если это заголовок кампании…
-        if (node.matches('.accordion-header')) {
-          const img = node.querySelector<HTMLImageElement>('img.tw-image');
-          const name = img?.alt.trim() ?? '';
-
-          const dateDiv = node.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
-          const dateText = dateDiv?.textContent?.trim() ?? '';
-
-          items.push({ name, dateText });
-        }
-		    }
-		    return items;
-		  }
-		);
+		 // 2) Выполним всю логику уже в контексте браузера
+		const campaignsAboveMarker = await page.evaluate(() => {
+		  // 2.1) Контейнер, где лежат **только** доступные кампании
+		  const dropsRoot = document.querySelector<HTMLDivElement>(
+		    'div.drops-root__content'
+		  );
+		  if (!dropsRoot) return [];
+	
+		  // 2.2) Все прямые дети (и кампании, и те маркеры ipnSdT)
+		  const children = Array.from(dropsRoot.children);
+	
+		  // 2.3) Найдём **первый** маркер ipnSdT в этом контейнере
+		  const cutoffIdx = children.findIndex(c =>
+		    c.classList.contains('ipnSdT')
+		  );
+		  // Если не нашли — значит все кампании выше
+		  const sliceEnd = cutoffIdx === -1 ? children.length : cutoffIdx;
+	
+		  // 2.4) Отрежем всё, что ниже, и оставим только `.accordion-header`
+		  const headers = children.slice(0, sliceEnd)
+		    .filter(el => el.matches('.accordion-header'));
+	
+		  // 2.5) Соберём нужные поля
+		  return headers.map(header => {
+		    const img = header.querySelector<HTMLImageElement>('img.tw-image');
+		    const name = img?.alt.trim() ?? '';
+		
+		    const dateDiv = header.querySelector<HTMLDivElement>(
+		      'div.Layout-sc-1xcs6mc-0.caYeGJ'
+		    );
+		    const dateText = dateDiv?.textContent?.trim() ?? '';
+		    return { name, dateText };
+		  });
+		});
 	  
-		// 3) Фильтруем по дате, генерим слаги
+		// 3) Фильтруем по дате и генерим слаги
 		const active = campaignsAboveMarker.filter(({ dateText }) =>
 		  hasCampaignStarted(dateText)
 		);
