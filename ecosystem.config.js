@@ -3,8 +3,9 @@ module.exports = {
     {
       name: 'tg-bot',
       cwd: './',
-      script: 'pnpm',
-      args: 'exec ts-node -r tsconfig-paths/register bot/bot.ts',
+      script: 'bot/bot.ts',
+      interpreter: 'node',
+      interpreter_args: ['-r', 'ts-node/register', '-r', 'tsconfig-paths/register'],
       watch: false,
       env: {
         NODE_ENV: 'production',
@@ -13,8 +14,9 @@ module.exports = {
     {
       name: 'twitch-miner',
       cwd: './',
-      script: 'pnpm',
-      args: 'exec ts-node -r tsconfig-paths/register stream-watcher/src/main.ts',
+      script: 'stream-watcher/src/main.ts',
+      interpreter: 'node',
+      interpreter_args: ['-r', 'ts-node/register', '-r', 'tsconfig-paths/register'],
       watch: false,
       env: {
         NODE_ENV: 'production',
