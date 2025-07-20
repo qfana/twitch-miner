@@ -61,15 +61,11 @@ export class TwitchService implements ITwitchService {
 			timeout: 60000
 		});
 
-		console.log(1);
-
 		const acceptBtn = await page.$('button[data-a-target="consent-banner-accept"]');
 		if (acceptBtn) {
 			await acceptBtn.click();
 			await new Promise(resolve => setTimeout(resolve, 1000)); // дать время странице обновиться
 		}
-
-		console.log(2);
 
 		try {
 			await page.waitForSelector('a.preview-card-channel-link', {
@@ -81,8 +77,6 @@ export class TwitchService implements ITwitchService {
 			return null;
 		}
 
-		console.log(3);
-
 		const channels: ({ name: string; viewers: number } | null)[] = await page.$$eval('a.preview-card-channel-link', (links) => {
 			return links.map(link => {
 				const href = link.getAttribute('href');
@@ -93,8 +87,6 @@ export class TwitchService implements ITwitchService {
 	
 		await page.close();
 	
-		console.log(5);
-
 		if (!channels.length) return null;
 	
 		// Можно сделать случайный выбор или вернуть первый:
@@ -121,40 +113,47 @@ export class TwitchService implements ITwitchService {
 	        await new Promise(resolve => setTimeout(resolve, 2000));
 	    }
 
-	    // каждая .accordion-header это кампания
-  		const campaigns: { name: string; dateText: string; }[] = await page.$$eval(
-  		  	'.accordion-header',
-  		  	headers => headers.map(header => {
-  		  	  	// 1) имя кампании
-  		  	  	const img = header.querySelector<HTMLImageElement>('img.tw-image');
-  		  	  	const name = img?.alt.trim() ?? '';
+	    // 2) Берём всех прямых детей контейнера, который держит и шапку, и все кампании
+		const campaignsAboveMarker = await page.$$eval(
+		  'div.drops-root-content > *',   // здесь drops-root-content — реальный класс вашего контейнера
+		  (nodes) => {
+		    const items: { name: string; dateText: string }[] = [];
+		    for (const node of nodes) {
+        // Если наткнулись на “границу” (тот самый div.ipnSdT), прекращаем сбор
+        if (node.classList.contains('ipnSdT')) {
+          break;
+        }
+        // Иначе, если это заголовок кампании…
+        if (node.matches('.accordion-header')) {
+          const img = node.querySelector<HTMLImageElement>('img.tw-image');
+          const name = img?.alt.trim() ?? '';
 
-  		  	  	// 2) текст с диапазоном дат из div.caYeGJ
-  		  	  	const dateDiv = header.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
-  		  	  	const dateText = dateDiv?.textContent?.trim() ?? '';
-			  
-  		  	  	return { name, dateText };
-  		  	})
-  		);
+          const dateDiv = node.querySelector('div.Layout-sc-1xcs6mc-0.caYeGJ');
+          const dateText = dateDiv?.textContent?.trim() ?? '';
 
-	    // Оставляем только те, у которых дата начала >= сегодня
-	    const active = campaigns.filter(({ dateText }) => {
-	        return hasCampaignStarted(dateText);
-	    });
+          items.push({ name, dateText });
+        }
+		    }
+		    return items;
+		  }
+		);
+	  
+		// 3) Фильтруем по дате, генерим слаги
+		const active = campaignsAboveMarker.filter(({ dateText }) =>
+		  hasCampaignStarted(dateText)
+		);
+		const slugs = Array.from(
+		  new Set(
+		    active.map(({ name }) =>
+		      name
+		        .toLowerCase()
+		        .replace(/[^a-z0-9]+/g, '-')
+		        .replace(/(^-+|-+$)/g, '')
+		    )
+		  )
+		);
 
-	    await page.close();
-
-	    // Преобразуем названия в слаги
-	    const slugs = Array.from(new Set(
-    	    active.map(({ name }) =>
-    	        name
-    	            .toLowerCase()
-    	            .replace(/[^a-z0-9]+/g, '-')
-    	            .replace(/(^-+|-+$)/g, '')
-    	    )
-    	));
-
-	    console.log(`[DEBUG] В/А/Д: ${campaigns.length} / ${active.length} / ${slugs.length} `);
+	    console.log(`[DEBUG] В/А/Д: ${campaignsAboveMarker.length} / ${active.length} / ${slugs.length} `);
 	    return slugs;
 	}
 
