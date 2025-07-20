@@ -4,7 +4,7 @@ module.exports = {
       name: 'tg-bot',
       cwd: './',
       script: 'pnpm',
-      args: 'exec ts-node -r tsconfig-paths/register bot/src/bot.ts',
+      args: 'exec ts-node -r tsconfig-paths/register bot/bot.ts',
       watch: false,
       env: {
         NODE_ENV: 'production',
