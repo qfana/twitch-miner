@@ -12,43 +12,57 @@ async function isLiveByPreview(login: string): Promise<boolean> {
 }
 
 
+const monthMap: Record<string,string> = {
+  'янв.': '01','фев.': '02','мар.': '03','апр.': '04','май': '05','июн.': '06',
+  'июл.': '07','авг.': '08','сен.': '09','окт.': '10','ноя.': '11','дек.': '12',
+};
+
 function hasCampaignStarted(dateRange: string): boolean {
-	console.log(dateRange)
-    // русские месяцы в формате "янв.", "фев.", ... без точки / с точкой
-    const monthsMap: Record<string, number> = {
-        'янв,': 0, 'фев,': 1, 'мар,': 2, 'апр,': 3, 'май,': 4, 'июн,': 5,
-        'июл,': 6, 'авг,': 7, 'сен,': 8, 'окт,': 9, 'ноя,': 10, 'дек,': 11
-    };
+  const now = new Date();
 
-    // 1. Отделяем часть до дефиса
-    const [startPart] = dateRange.split(' - ');
-    // пример startPart: "вт, 24 июн., 18:00"
+  // Разделяем начало и конец
+  const [startRaw, endRaw] = dateRange.split(' - ').map(s => s.trim());
 
-    // 2. Убираем день недели и запятые, остаётся "24 июн. 18:00"
-    const cleaned = startPart
-        .replace(/^[^,]*,\s*/, '')     // убираем "вт, "
-        .replace(/\./g, '')            // убираем точки из "июн."
-        .trim();                       // "24 июн 18:00"
+  // Парсим одну сторону
+  function parsePart(raw: string): Date {
+    // 1) Убираем день недели ("сб, ")
+    let t = raw.replace(/^[^,]+,\s*/, '');
 
-    // 3. Разбиваем на дату и время
-    const [dayStr, monthStr, timeStr] = cleaned.split(/\s+/);
-    const [hourStr, minuteStr] = timeStr.split(':');
+    // 2) Отделяем GMT-метку, если она есть
+    let tz = 'GMT+3'; // по умолчанию
+    const tzMatch = t.match(/GMT[+-]\d+/);
+    if (tzMatch) {
+      tz = tzMatch[0];
+      t = t.replace(tz, '').trim();
+    }
 
-    const day   = parseInt(dayStr, 10);
-    const month = monthsMap[monthStr.toLowerCase()];
-    const hour  = parseInt(hourStr, 10);
-    const minute= parseInt(minuteStr, 10);
+    // t теперь что‑то вроде "19 июл., 23:30"
+    // 3) Разбиваем по пробелам
+    const [day, monthRusWithDot, time] = t.split(/\s+/);
+    const monthRus = monthRusWithDot.replace(',', '');
+    const month = monthMap[monthRus];
+    if (!month) {
+      throw new Error(`Не могу распознать месяц: ${monthRus}`);
+    }
 
-    // 4. Берём текущий год
-    const now    = new Date();
-    const year   = now.getFullYear();
+    // 4) Формируем ISO‑строку вида "YYYY-MM-DDTHH:mm:00+03:00"
+    const year = now.getFullYear();
+    const [hh, mm] = time.split(':');
+    // переводим "GMT+3" → "+03:00"
+    const sign = tz[3];              // '+' или '-'
+    const offsetHours = tz.slice(4); // '3' или '03'
+    const hhOffset = offsetHours.padStart(2, '0');
+    const iso = `${year}-${month}-${day.padStart(2,'0')}T${hh}:${mm}:00${sign}${hhOffset}:00`;
 
-    // 5. Собираем дату старта в локальной временной зоне
-    const startDate = new Date(year, month, day, hour, minute);
+    return new Date(iso);
+  }
 
-    // 6. Сравниваем
-    return now.getTime() >= startDate.getTime();
+  const startDate = parsePart(startRaw);
+  const endDate   = parsePart(endRaw);
+
+  return now >= startDate && now <= endDate;
 }
+
 export class TwitchService implements ITwitchService {
 	constructor(private readonly browserService: BrowserService) {}
     
