@@ -5,7 +5,7 @@ module.exports = {
       cwd: './',
       script: 'bot/bot.ts',
       interpreter: 'node',
-      interpreter_args: ['-r', 'ts-node/register', '-r', 'tsconfig-paths/register'],
+      interpreter_args: ['-r', 'ts-node/register'],
       watch: false,
       env: {
         NODE_ENV: 'production',
@@ -16,7 +16,7 @@ module.exports = {
       cwd: './',
       script: 'stream-watcher/src/main.ts',
       interpreter: 'node',
-      interpreter_args: ['-r', 'ts-node/register', '-r', 'tsconfig-paths/register'],
+      interpreter_args: ['-r', 'ts-node/register'],
       watch: false,
       env: {
         NODE_ENV: 'production',
