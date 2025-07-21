@@ -2,34 +2,32 @@
 module.exports = {
   apps: [
     {
-      name       : 'tg-bot',
-      cwd        : '/root/twitch-miner',          // корень вашего репо
-      script     : 'bot/bot.ts',                  // точка входа .ts
-      interpreter: 'node',                        // используем Node
+      name: 'tg-bot',
+      cwd: '/root/twitch-miner',          // корень репо
+      script: './bot/bot.ts',             // ваш TS‑файл
+      interpreter: 'node',                // запускаем через node
       interpreter_args: [
-        '-r', 'ts-node/register',                // регистрируем ts-node
-        '-r', 'dotenv/config'                    // (если нужно) подхват .env
+        '-r', 'ts-node/register',         // регистрируем ts-node
+        '-r', 'dotenv/config'             // грузим .env
       ],
-      watch      : false,
-      env_file   : '.env',                        // подтягиваем все ваши vars
-      env        : {
+      watch: false,
+      env: {
         NODE_ENV: 'production'
-      },
+      }
     },
     {
-      name       : 'twitch-miner',
-      cwd        : '/root/twitch-miner',
-      script     : 'stream-watcher/src/main.ts',
+      name: 'twitch-miner',
+      cwd: '/root/twitch-miner',
+      script: './stream-watcher/src/main.ts',
       interpreter: 'node',
       interpreter_args: [
         '-r', 'ts-node/register',
         '-r', 'dotenv/config'
       ],
-      watch      : false,
-      env_file   : '.env',
-      env        : {
+      watch: false,
+      env: {
         NODE_ENV: 'production'
-      },
+      }
     }
   ]
-}
+};
