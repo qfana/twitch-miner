@@ -42,7 +42,6 @@ const prioritizedGames : IGamePriority[] = [
 const fallbackChannels = [
 	'godrage77',
 	'mishkagammi',
-	'sinnexxy',
 	'arssisbsd',
 	'a13rt1k',
 	'igoresh1xx',

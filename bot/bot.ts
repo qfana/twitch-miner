@@ -1,4 +1,7 @@
-import { Telegraf, session, Context, Scenes } from 'telegraf';
+import { Telegraf, session, Context } from 'telegraf';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 interface BotContext extends Context {
   session: {
