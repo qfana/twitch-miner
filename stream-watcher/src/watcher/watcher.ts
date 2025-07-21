@@ -47,10 +47,6 @@ export class WatcherService implements IWatcherService {
 		if (this.counterTicks % 3 === 0) this._every15sec();
 		if (this.counterTicks % 6 === 0) this._every30sec();
 		if (this.counterTicks % 80 === 0) {
-			const pages = this.browserService.getPages();
-			for (let i = 0; i < pages.length; i++) {
-				pages[i].screenshot({path: `screenshot${i}_${this.counterTicks}.png`});
-			};
 			this._every20min()
 		};
 	}
