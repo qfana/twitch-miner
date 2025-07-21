@@ -1,7 +1,8 @@
 import { Telegraf, session, Context } from 'telegraf';
 import dotenv from 'dotenv';
-
+import { Stage } from 'telegraf/scenes';
 dotenv.config();
+
 
 interface BotContext extends Context {
   session: {
@@ -21,23 +22,9 @@ export class BotManager {
     public async Init() {
         this.bot.use(session());
 
-        this.bot.start(ctx => ctx.reply('Добро пожаловать!'));
-        this.bot.help(ctx => ctx.reply('Используйте кнопки меню ниже.'));
+        this.bot.inlineQuery('hello', (ctx) => ctx.answerCbQuery('Hello!'));
 
-
-        this.bot.command('menu', ctx => {
-          ctx.reply('Главное меню', {
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: 'Настройки ⚙️', callback_data: 'MENU_SETTINGS' }],
-                [{ text: 'Запустить фарм ▶️', callback_data: 'MENU_START_FARM' }],
-                [{ text: 'Остановить фарм ⏹️', callback_data: 'MENU_STOP_FARM' }],
-                [{ text: 'Статус 📊', callback_data: 'MENU_STATUS' }],
-                [{ text: 'Подписка 💳', callback_data: 'MENU_SUBSCRIBE' }],
-              ],
-            },
-          });
-        });
+        
     }
 
     public async launch() {
