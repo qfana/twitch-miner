@@ -4,16 +4,17 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "lib": ["ESNext", "DOM"],
-    "rootDir": "./src",
-    "outDir": "./dist",
+    "rootDir": ".",
+    "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "src/types.ts"],
+  "include": [
+    "bot/**/*.ts",
+    "stream-watcher/src/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }
