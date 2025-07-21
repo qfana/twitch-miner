@@ -47,3 +47,4 @@ export class BotManager {
 }
 
 const test = new BotManager();
+test.launch();
