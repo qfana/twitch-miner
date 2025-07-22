@@ -1,3 +1,6 @@
-export interface UserService {
-    getOrCreate(userId: string): Promise<void>;
+import { BotContext } from "../bot";
+
+export interface IUserService {
+    Settings(ctx: BotContext): Promise<void>;
+    Subscribe(ctx: BotContext): Promise<void>;
 }

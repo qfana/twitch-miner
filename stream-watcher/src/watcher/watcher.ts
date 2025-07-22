@@ -61,7 +61,7 @@ export class WatcherService implements IWatcherService {
 
 	private async _every20min(): Promise<void> {
 		console.log('[WatcherService] 20 MINUTES CHECKS STARTED');
-		if (this.currentFarmingSlug) { 
+		if (this.currentFarmingSlug) {
 			const channel = await this.twitchService.getTwitchDropChannel(this.currentFarmingSlug);
 
 			if (channel) {

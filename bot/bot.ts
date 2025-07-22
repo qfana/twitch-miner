@@ -1,10 +1,14 @@
 import { Telegraf, session, Context, Markup } from 'telegraf';
 import dotenv from 'dotenv';
 import { Stage } from 'telegraf/scenes';
+import { FarmHandlerService } from './services/FarmHandler';
+import { UserService } from './services/UserService';
+import { IUserService } from './services/UserService.interface';
+import { IFarmHandlerService } from './services/FarmHandler.inteface';
 dotenv.config();
 
 
-interface BotContext extends Context {
+export interface BotContext extends Context {
   session: {
     step?: 'token' | 'games' | 'fallback';
   };
@@ -12,15 +16,19 @@ interface BotContext extends Context {
 
 export class BotManager {
     private bot: Telegraf<BotContext>;
+    private userService: IUserService;
+    private farmHandlerService: IFarmHandlerService;
 
     constructor () {
         this.bot = new Telegraf<BotContext>(process.env.TELEGRAM_TOKEN!);
+        this.userService = new UserService(this.bot);
+        this.farmHandlerService = new FarmHandlerService(this.bot);
 
         this.Init();
         this.InitHears();
     }
 
-    private async Init() {
+    private async Init(): Promise<void> {
         this.bot.use(session());
         
         this.bot.start(ctx => {
@@ -50,24 +58,24 @@ export class BotManager {
         console.log('Telegram bot launched');
     }
 
-    private async _startFarm(...args: any[]) {
-        console.log(...args)
+    private async _startFarm(ctx: BotContext) {
+       this.farmHandlerService.StartFarming(ctx);
     }
 
-    private async _stopFarm(...args: any[]) {
-        
+    private async _stopFarm(ctx: BotContext) {
+        this.farmHandlerService.StopFarming(ctx);
     }
 
-    private async _settings() {
-        
+    private async _settings(ctx: BotContext) {
+        this.userService.Settings(ctx);
     }
 
-    private async _status() {
-        
+    private async _status(ctx: BotContext) {
+        this.farmHandlerService.GetStatus(ctx);
     }
 
-    private async _subscribe() {
-        
+    private async _subscribe(ctx: BotContext) {
+        this.userService.Subscribe(ctx);
     }
 }
 
