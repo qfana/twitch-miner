@@ -26,10 +26,8 @@ export class BotManager {
             return ctx.reply(
                 'Привет! Чем займёмся?',
                 Markup.keyboard([
-                    [ Markup.button.callback('▶️ Запустить фарм', 'START_FARM') ],
-                    [ Markup.button.callback('⏹️ Остановить фарм', 'STOP_FARM') ],
-                    [ Markup.button.callback('⚙️ Настройки',    'SETTINGS')   ],
-                    [ Markup.button.callback('📊 Статус',       'STATUS')     ],
+                    [ Markup.button.callback('▶️ Запустить фарм', 'START_FARM'), Markup.button.callback('⏹️ Остановить фарм', 'STOP_FARM')  ],
+                    [ Markup.button.callback('⚙️ Настройки',    'SETTINGS'), Markup.button.callback('📊 Статус',       'STATUS') ],
                     [ Markup.button.callback('💳 Подписка',     'SUBSCRIBE')  ],
                 ])
             );
