@@ -17,27 +17,32 @@ export class BotManager {
         this.bot = new Telegraf<BotContext>(process.env.TELEGRAM_TOKEN!);
 
         this.Init();
+        this.InitHears();
     }
 
-    public async Init() {
+    private async Init() {
         this.bot.use(session());
         
         this.bot.start(ctx => {
             return ctx.reply(
                 'Привет! Чем займёмся?',
                 Markup.keyboard([
-                    [ Markup.button.callback('▶️ Запустить фарм', 'START_FARM'), Markup.button.callback('⏹️ Остановить фарм', 'STOP_FARM')  ],
-                    [ Markup.button.callback('⚙️ Настройки',    'SETTINGS'), Markup.button.callback('📊 Статус',       'STATUS') ],
-                    [ Markup.button.callback('💳 Подписка',     'SUBSCRIBE')  ],
+                    ['▶️ Запустить фарм', '⏹️ Остановить фарм'],
+                    ['⚙️ Настройки',       '📊 Статус'],
+                    ['💳 Подписка']
                 ])
+                .resize()
+                .oneTime(false)
             );
         });
+    }
 
-        // this.bot.hears('▶️ Запустить фарм', ctx => ctx.reply('Фарм запущен!'));
-        // this.bot.hears('⏹️ Остановить фарм', ctx => ctx.reply('Фарм остановлен'));
-        // this.bot.hears('⚙️ Настройки', ctx => ctx.reply('Здесь настройки...'));
-        // this.bot.hears('📊 Статус', ctx => ctx.reply('Ваш статус...'));
-        // this.bot.hears('💳 Подписка', ctx => ctx.reply('Информация о подписке...'));
+    private async InitHears() {
+        this.bot.hears('▶️ Запустить фарм', this._startFarm.bind(this));
+        this.bot.hears('⏹️ Остановить фарм', this._stopFarm.bind(this));
+        this.bot.hears('⚙️ Настройки', this._settings.bind(this));
+        this.bot.hears('📊 Статус', this._status.bind(this));
+        this.bot.hears('💳 Подписка', this._subscribe.bind(this));
     }
 
     public async launch() {
@@ -45,6 +50,25 @@ export class BotManager {
         console.log('Telegram bot launched');
     }
 
+    private async _startFarm(...args: any[]) {
+        console.log(...args)
+    }
+
+    private async _stopFarm(...args: any[]) {
+        
+    }
+
+    private async _settings() {
+        
+    }
+
+    private async _status() {
+        
+    }
+
+    private async _subscribe() {
+        
+    }
 }
 
 const test = new BotManager();
