@@ -1,4 +1,4 @@
-import { Telegraf, session, Context } from 'telegraf';
+import { Telegraf, session, Context, Markup } from 'telegraf';
 import dotenv from 'dotenv';
 import { Stage } from 'telegraf/scenes';
 dotenv.config();
@@ -22,9 +22,18 @@ export class BotManager {
     public async Init() {
         this.bot.use(session());
 
-        this.bot.inlineQuery('hello', (ctx) => ctx.answerCbQuery('Hello!'));
-
-        
+        this.bot.start(ctx => {
+              return ctx.reply(
+                'Привет! Чем займёмся?',
+                Markup.keyboard([
+                  ['▶️ Запустить фарм', '⏹️ Остановить фарм'],
+                  ['⚙️ Настройки', '📊 Статус'],
+                  ['💳 Подписка']
+                ])
+                .resize()      // подогнать размер
+                .oneTime(false) // оставить клавиатуру после первого нажатия
+              );
+            });
     }
 
     public async launch() {
