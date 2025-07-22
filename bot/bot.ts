@@ -21,11 +21,11 @@ export class BotManager {
 
     public async Init() {
         this.bot.use(session());
-
+        
         this.bot.start(ctx => {
             return ctx.reply(
                 'Привет! Чем займёмся?',
-                Markup.inlineKeyboard([
+                Markup.keyboard([
                     [ Markup.button.callback('▶️ Запустить фарм', 'START_FARM') ],
                     [ Markup.button.callback('⏹️ Остановить фарм', 'STOP_FARM') ],
                     [ Markup.button.callback('⚙️ Настройки',    'SETTINGS')   ],
@@ -35,6 +35,11 @@ export class BotManager {
             );
         });
 
+        // this.bot.hears('▶️ Запустить фарм', ctx => ctx.reply('Фарм запущен!'));
+        // this.bot.hears('⏹️ Остановить фарм', ctx => ctx.reply('Фарм остановлен'));
+        // this.bot.hears('⚙️ Настройки', ctx => ctx.reply('Здесь настройки...'));
+        // this.bot.hears('📊 Статус', ctx => ctx.reply('Ваш статус...'));
+        // this.bot.hears('💳 Подписка', ctx => ctx.reply('Информация о подписке...'));
     }
 
     public async launch() {
