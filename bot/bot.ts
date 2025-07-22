@@ -23,23 +23,25 @@ export class BotManager {
         this.bot.use(session());
 
         this.bot.start(ctx => {
-              return ctx.reply(
+            return ctx.reply(
                 'Привет! Чем займёмся?',
-                Markup.keyboard([
-                  ['▶️ Запустить фарм', '⏹️ Остановить фарм'],
-                  ['⚙️ Настройки', '📊 Статус'],
-                  ['💳 Подписка']
+                Markup.inlineKeyboard([
+                    [ Markup.button.callback('▶️ Запустить фарм', 'START_FARM') ],
+                    [ Markup.button.callback('⏹️ Остановить фарм', 'STOP_FARM') ],
+                    [ Markup.button.callback('⚙️ Настройки',    'SETTINGS')   ],
+                    [ Markup.button.callback('📊 Статус',       'STATUS')     ],
+                    [ Markup.button.callback('💳 Подписка',     'SUBSCRIBE')  ],
                 ])
-                .resize()      // подогнать размер
-                .oneTime(false) // оставить клавиатуру после первого нажатия
-              );
-            });
+            );
+        });
+
     }
 
     public async launch() {
         await this.bot.launch();
         console.log('Telegram bot launched');
     }
+
 }
 
 const test = new BotManager();
