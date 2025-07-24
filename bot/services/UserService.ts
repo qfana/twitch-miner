@@ -1,6 +1,7 @@
 import { Markup, Telegraf } from 'telegraf';
 import { BotContext } from '../bot';
 import { IUserService } from './UserService.interface';
+import { inlineKeyboard } from 'telegraf/typings/markup';
 
 const TEXTS = {
     SETTINGS: `*Настройки*
@@ -26,12 +27,15 @@ export class UserService implements IUserService {
 
         await ctx.reply(
             TEXTS.SETTINGS,
-            Markup.inlineKeyboard([
-                [ Markup.button.callback('🔑 Установить ключ аутентификации', 'SET_AUTH_KEY') ],
-                [ Markup.button.callback('🎮 Настройка игр', 'SET_DROPS_GAME') ],
-                [ Markup.button.callback('📺 Настройка стримеров', 'SET_DROPS_GAME') ],
-            ])
-        )
+            {
+                parse_mode: 'Markdown',
+                ...Markup.inlineKeyboard([
+                    [ Markup.button.callback('🔑 Установить ключ аутентификации', 'SET_AUTH_KEY') ],
+                    [ Markup.button.callback('🎮 Настройка игр',                'SET_DROPS_GAME') ],
+                    [ Markup.button.callback('📺 Настройка стримеров',           'SET_FALLBACK')  ],
+                ])
+            }
+        );
     }
 
     async Subscribe(ctx: BotContext): Promise<void> {
